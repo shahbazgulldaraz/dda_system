@@ -1,14 +1,19 @@
 package org.ddaSystem;
 
+import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,17 +41,7 @@ public class Basic {
             }
         }
         if (devices.isEmpty()) {
-//            System.out.println("\n\n\nNo device connected to the system. Terminating the program.!!!!\n\n\n");
-            devices.add("TestingUDID1");
-            devices.add("TestingUDID2");
-            devices.add("TestingUDID3");
-            devices.add("TestingUDID4");
-            devices.add("TestingUDID5");
-            devices.add("TestingUDID6");
-            devices.add("TestingUDID7");
-            devices.add("TestingUDID8");
-            devices.add("TestingUDID9");
-            devices.add("TestingUDID10");
+            System.out.println("\n\n\nNo device connected to the system. Terminating the program.!!!!\n\n\n");
 //            System.exit(0); Temprary blocked for development.
         } else {
             System.out.println("\n\nConnected devices are >> " + devices);
@@ -333,6 +328,21 @@ public class Basic {
     }
 
 
+    public void updateJobIsFreeOrOccupied(String JobName,Boolean FreeOrNot) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
+            String updateQuery = "UPDATE Jenkins_jobs SET Device_Is_Free = ? WHERE Job_Name = ?";
+            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                updateStatement.setBoolean(1, FreeOrNot);
+                updateStatement.setString(2, JobName);
+                updateStatement.executeUpdate();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
 
 
     public void updateDeviceInformation(List<String> devices) {
@@ -435,6 +445,126 @@ public class Basic {
 //        return false;
 //    }
 
+    //write a method which takes string "JobsName",and store it in the "Device_Name" column then it will break the string into two strings,
+    // the string before "_os_" will be the Device_Name and the string after "_os_" is the Os_version and will be stored as OS_Version
+    // if the "jobName" dont have "_os_" then store the whole string in the Device_Name column, in Jenkins_Jobs table.
+    // This method will return the list of devices from  Jenkins_Jobs table in descending order.
+
+    public void storeJobDetailsInDB(String jobName, boolean inProgress, Boolean job_in_queue) {
+        // Define a pattern to match "deviceName_os_version" format
+        Pattern pattern = Pattern.compile("^(\\w+)_os_(\\d+)$");
+        Matcher matcher = pattern.matcher(jobName);
+
+        if (matcher.matches()) {
+            String deviceName = matcher.group(1);
+            String osVersion = matcher.group(2);
+
+            try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
+                String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
+                try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
+                    selectStatement.setString(1, jobName);
+                    ResultSet resultSet = selectStatement.executeQuery();
+
+                    if (resultSet.next()) {
+                        // If the job already exists, update its columns
+                        String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
+                        try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                            updateStatement.setString(1, deviceName);
+                            updateStatement.setString(2, osVersion);
+                            updateStatement.setBoolean(3, !inProgress);
+                            updateStatement.setBoolean(4, job_in_queue);
+                            updateStatement.setString(5, jobName);
+                            updateStatement.executeUpdate();
+                        }
+                    } else {
+                        // If the job doesn't exist, insert a new record
+                        String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
+                            insertStatement.setString(1, jobName);
+                            insertStatement.setString(2, deviceName);
+                            insertStatement.setString(3, osVersion);
+                            insertStatement.setBoolean(4, !inProgress);
+                            insertStatement.setBoolean(5, job_in_queue);
+                            insertStatement.executeUpdate();
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace(); // Handle the exception appropriately
+            }
+        }
+    }
+
+
+    //get Job details from Jenkins_Jobs table in descending order of Device_Os_Version
+    public List<String> getJobDetailsSortedByOSVersion() throws SQLException {
+        List<String> jobDetails = new ArrayList<>();
+        String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Device_Is_Free = 0 ORDER BY Device_Os_Version DESC";
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+             ResultSet resultSet = selectStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String jobName = resultSet.getString("Job_Name");
+                jobDetails.add(jobName);
+            }
+        }
+        return jobDetails;
+    }
+
+    public void DeviceStatusScheduler(String deviceUdids, String Status) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                updateDeviceIsFreeOrOccupied(deviceUdids,Status);
+                if(Status.equals("1")){
+                    System.out.println(deviceUdids+"<<:::Device is FreeNow by scheduler");
+                }else {
+                    System.out.println(deviceUdids+"<<:::Device is Occupied by scheduler");
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace(); // Handle the exception as per your application's needs
+            }
+        }, 0, 10, TimeUnit.SECONDS);
+    }
+
+
+    // Method to convert a duration in milliseconds to a readable format
+    public static String convertToReadableTimeFormat(long milliseconds) {
+        long seconds = (milliseconds / 1000) % 60;    // Extract seconds
+        long minutes = (milliseconds / (1000 * 60)) % 60;    // Extract minutes
+        long hours = (milliseconds / (1000 * 60 * 60)) % 24;  // Extract hours
+        long days = milliseconds / (1000 * 60 * 60 * 24);     // Extract days
+
+        return String.format("%d hours, %d minutes, %d seconds", hours, minutes, seconds);
+    }
+
+    // Method to convert a timestamp in milliseconds to a readable date and time format
+    public static String convertToReadableDateAndTimeFormat(long milliseconds) {
+        Date date = new Date(milliseconds);  // Create a Date object from the timestamp
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy, hh:mm a"); // Define date format
+        return sdf.format(date);  // Format the date and return as a string
+    }
+
+    // Method to encode username and password for HTTP Basic Authentication
+    public String getEncodedCredentials(String username, String password) {
+        String credentials = username + ":" + password;  // Combine username and password
+        return java.util.Base64.getEncoder().encodeToString(credentials.getBytes());  // Encode to Base64
+    }
+
+
+    // Method to write a JSONObject to a file in a specified file path
+    public void writeJsonToFile(JSONObject json, String filePath) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(filePath)) {
+            fileWriter.write(json.toString(4));  // Write JSON with 4-space indentation
+        }
+    }
+
+
+
     public List<String> getAvailableDeviceUDIDsSortedByOSVersion() throws SQLException {
         List<String> availableDeviceUDIDs = new ArrayList<>();
         String selectQuery = "SELECT Device_UDID FROM Devices " +
@@ -463,6 +593,26 @@ public class Basic {
              PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
 
             selectStatement.setString(1, deviceUDID);
+
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    osVersion = resultSet.getString("Device_OS_Version");
+                }
+            }
+        }
+
+        return osVersion;
+    }
+
+    public String getJobOSVersion(String JobName) throws SQLException {
+        String osVersion = null;
+        String selectQuery = "SELECT Device_Os_Version FROM Jenkins_jobs " +
+                "WHERE Job_Name = ?";
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
+
+            selectStatement.setString(1, JobName);
 
             try (ResultSet resultSet = selectStatement.executeQuery()) {
                 if (resultSet.next()) {

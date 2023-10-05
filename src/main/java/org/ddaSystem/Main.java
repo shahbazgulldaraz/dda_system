@@ -1,15 +1,15 @@
 package org.ddaSystem;
 
-import com.sun.source.tree.WhileLoopTree;
-
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.List;
+import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
-import java.sql.SQLException;
 
 
 public class Main {
@@ -26,40 +26,49 @@ public class Main {
     public static void main(String[] args) throws SQLException, IOException, InterruptedException {
             Main app = new Main();
             Basic basic = new Basic();
-//            basic.setupDatabase();
+            CurlRequest curlRequest = new CurlRequest();
 
-//            List<String> connectedDevices = basic.getConnectedDevices();
-//            basic.updateDeviceInformation(connectedDevices);
-//            System.out.println("Connected devices are:>>> " + connectedDevices);
-            // Initialize job scheduler
-//            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-//            scheduler.scheduleAtFixedRate(() -> {
-//                try {
-//                    System.out.println("\n\nScheduling jobs...");
-//                    //fetch Device_UDID from the Database "Devices" table where Devices_Status =1 and Device_free =1 sorted by OS_VERSION decending order then store them into a list.
-////                    List<String> connectedDevicesInDB = basic.getAvailableDeviceUDIDsSortedByOSVersion();
-////                    System.out.println("\n\n\nConnected devices in DB are:>>> " + connectedDevicesInDB);
-//                    // Schedule jobs
-////                    int loopCount = 0;
-////                    while(basic.getAvailableDeviceUDIDsSortedByOSVersion().size()>0 && loopCount<16){
-////                        System.out.println("Available devices are:>>> " + basic.getAvailableDeviceUDIDsSortedByOSVersion());
-////                        System.out.println("Ventures with priorities are:>>> " + basic.getVenturesWithPriorities());
-//                        app.scheduleJobs(basic.getAvailableDeviceUDIDsSortedByOSVersion(), basic.getVenturesWithPriorities());
-////                        System.out.println("\n\nLoop count is: " + loopCount);
-////                        loopCount++;
-////                    }
-//                } catch (SQLException | InterruptedException | IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }, 0, 1, TimeUnit.SECONDS);
 
-            app.scheduleJobs(basic.getAvailableDeviceUDIDsSortedByOSVersion(), basic.getVenturesWithPriorities());
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        // Get the current time
+        LocalDateTime now = LocalDateTime.now();
+
+        // Calculate the initial delay until 10pm
+        LocalTime tenPM = LocalTime.of(22, 0); // 10:00 PM
+        LocalDateTime nextExecutionTime = LocalDateTime.of(now.toLocalDate(), tenPM);
+        if (now.isAfter(nextExecutionTime)) {
+            nextExecutionTime = nextExecutionTime.plusDays(1); // Schedule for tomorrow if it's already past 10pm
         }
+        Duration initialDelay = Duration.between(now, nextExecutionTime);
+
+        // Calculate the shutdown time at 7am
+        LocalTime sevenAM = LocalTime.of(7, 0); // 7:00 AM
+        LocalDateTime shutdownTime = LocalDateTime.of(now.toLocalDate().plusDays(1), sevenAM); // Tomorrow at 7am
+
+        // Schedule the task
+        scheduler.scheduleAtFixedRate(() -> {
+            System.out.println("Running at " + LocalDateTime.now());
+            try {
+                curlRequest.curlRequest();
+                app.scheduleJobs(basic.getJobDetailsSortedByOSVersion(), basic.getVenturesWithPriorities());
+
+                // Check if it's time to shutdown (after 7am)
+                if (LocalDateTime.now().isAfter(shutdownTime)) {
+                    System.out.println("Shutting down...");
+                    System.exit(0);
+                }
+            } catch (SQLException | IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }, initialDelay.toSeconds(), 24 * 60 * 60, TimeUnit.SECONDS); // 24 hours interval (for daily execution)
+    }
+
 
 
     // Define a method to schedule jobs
-    public void scheduleJobs(List<String> devices, List<Venture> ventures) throws SQLException, InterruptedException, IOException {
-        List<String> deviceList = new ArrayList<>(devices);
+    public void scheduleJobs(List<String> jobs_names, List<Venture> ventures) throws SQLException, InterruptedException, IOException {
+        List<String> jobs_names_list = new ArrayList<>(jobs_names);
         List<Venture> ventureList = new ArrayList<>(ventures);
 //        Map<String, Integer> allocationSet = new HashMap<>();
 
@@ -93,64 +102,46 @@ public class Main {
 //                    System.out.println("\n\nRunning Again \n\n\n\n");
 //        }
 
-        int maxLoopCount = deviceList.size() >= 8 ? 3 : 2;
+        int maxLoopCount = jobs_names_list.size() >= 8 ? 3 : 2;
         int totalAllocations = ventureList.size() * maxLoopCount;
         System.out.println("Total allocations are: "+totalAllocations+"\n\n\n");
         for (int i = 0; i < maxLoopCount; i++) {
             for (Venture venture: ventureList) {
-                Collections.shuffle(deviceList);
+                Collections.shuffle(jobs_names_list);
                 Buyer buyerInfo = basic.findAvailableBuyer(venture);
-                System.out.println("\n THis is the combination I am about to insert in the DB >>" + deviceList.get(random.nextInt(deviceList.size())) + "<<::" + venture.getName() + "<<::" + buyerInfo.getEmail() + "<<::" + buyerInfo.getPassword());
-                allocateDevice(deviceList.get(random.nextInt(deviceList.size())), venture, buyerInfo);
+                allocateJobs(jobs_names_list.get(random.nextInt(jobs_names_list.size())), venture, buyerInfo);
                 }
         }
     }
 
 
 
-    private void allocateDevice(String deviceUdid, Venture ventureName, Buyer buyerInfo) throws SQLException, InterruptedException{
-        System.out.println("Device UDID is: " + deviceUdid);
+    private void allocateJobs(String jobName, Venture ventureName, Buyer buyerInfo) throws SQLException, InterruptedException, IOException {
+        System.out.println("Device UDID is: " + jobName);
         System.out.println("Venture name is: " + ventureName);
         System.out.println("Buyer hash set is: " + buyerInfo + "\n\n\n");
-        Calendar calendar = Calendar.getInstance();
         java.sql.Timestamp executionStartDate = new java.sql.Timestamp(System.currentTimeMillis());
-        basic.insertExecutionRecord(ventureName, deviceUdid, Integer.parseInt(basic.getDeviceOSVersion(deviceUdid)), buyerInfo, executionStartDate);
+        System.out.println("I am about to insert this following."+ventureName+ " <::> " + jobName+ " <::> " +Integer.parseInt(basic.getJobOSVersion(jobName))+ " <::> " +buyerInfo+ " <::> " +executionStartDate);
+        basic.insertExecutionRecord(ventureName, jobName, Integer.parseInt(basic.getJobOSVersion(jobName)), buyerInfo, executionStartDate);
         String ventureNameString = ventureName.getName();
-        String deviceUdidString = deviceUdid;
-        String deviceOSVersionString = basic.getDeviceOSVersion(deviceUdid);
+        String deviceUdidString = jobName;
         String buyerEmailString = buyerInfo.getEmail();
         String buyerPasswordString = buyerInfo.getPassword();
-        JenkinsFileGen jenkinsFileGen = new JenkinsFileGen();
-        jenkinsFileGen.generatePipeline(ventureNameString, deviceUdidString, deviceOSVersionString, buyerEmailString, buyerPasswordString);
-        System.out.println("Jenkins file generated successfully.");
-        basic.updateDeviceIsFreeOrOccupied(deviceUdid,"0");
+        //send curl request calling curl here
+        CurlRequest curlRequest = new CurlRequest();
+        System.out.println("Sending curl request to the device: " + deviceUdidString);
+        curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
 
+        basic.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         // Generate a random number between 5000 and 10000 (5 to 10 seconds)
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
         System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.");
         Thread.sleep(sleepTime);
-        basic.updateExecutionEndTime(deviceUdid, ventureName.getName());
-        DeviceStatusScheduler(deviceUdid,"1");
-    }
-
-    private void DeviceStatusScheduler(String deviceUdids, String Status) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                basic.updateDeviceIsFreeOrOccupied(deviceUdids,Status);
-                if(Status.equals("1")){
-                    System.out.println(deviceUdids+"<<:::Device is FreeNow by scheduler");
-                }else {
-                    System.out.println(deviceUdids+"<<:::Device is Occupied by scheduler");
-                }
-
-            } catch (SQLException e) {
-                e.printStackTrace(); // Handle the exception as per your application's needs
-            }
-        }, 0, 10, TimeUnit.SECONDS);
+//        basic.DeviceStatusScheduler(jobName,"1");
     }
 }
+
+
 
 //Fetch total number of devices from the database "Devices" table where Devices_Status =1 and Device_free =1
 // store them into a list

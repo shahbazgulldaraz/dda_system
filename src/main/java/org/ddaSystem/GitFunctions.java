@@ -2,11 +2,6 @@ package org.ddaSystem;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.RefNotAdvertisedException;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
@@ -18,81 +13,120 @@ import java.util.List;
 
 public class GitFunctions {
 
-//    public void performGitOperations(String deviceUdid, String deviceOS, String executionVenture) {
-//        try {
-//            // Execute Git commands
-//            executeCommand("git fetch");
-//            executeCommand("git pull");
-//            String branchName = deviceUdid + "_" + deviceOS + "_" + executionVenture;
-//            boolean branchExists = executeCommand("git branch | grep -w " + branchName);
-//
-//            if (!branchExists) {
-//                // Create a new branch
-//                executeCommand("git checkout -b " + branchName);
-//            } else {
-//                // Checkout existing branch
-//                executeCommand("git checkout " + branchName);
-//            }
-//
-//            // Perform other Git operations
-//            executeCommand("git add .");
-//            executeCommand("git commit -m \"" + branchName + "\"");
-//            executeCommand("git push");
-//
-//            System.out.println("Git operations completed successfully.");
-//        } catch (IOException | InterruptedException e) {
-//            e.printStackTrace();
-//            System.out.println("Error executing Git operations.");
-//        }
-//    }
+    private static final String REMOTE_URL = "https://github.com/shahbazgulldaraz/dda_system.git";
+    private static final String USERNAME = "shahbaz.gull@daraz.com";
+    private static final String PASSWORD = "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";
 
 
-    public static void performGitOperationsTwo(String branchName, String fileToUploadPath) {
-        try {
-            // Connect to the remote repository
-            Git git = Git.cloneRepository()
-                    .setURI("https://github.com/shahbazgulldaraz/dda_system.git")
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider("shahbaz.gull@daraz.com", "Sarkar@10085"))
-                    .call();
-            System.out.println("Git operations started.");
-            // 1) git fetch
-            git.fetch().call();
+    public static void performGitOperationsTwo(String branchName, String fileToUploadPath) throws GitAPIException {
 
-            // 2) git pull
-            git.pull().call();
+        deleteDirectory(new File("temp-repo"));
+        // Connect to the remote repository
+        Git git = Git.cloneRepository()
+                .setURI(REMOTE_URL)
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD))
+                .setDirectory(new File("temp-repo"))
+                .call();
 
-            // 3) git branch
-            List<Ref> branches = git.branchList().call();
+        // Fetch changes from the remote repository
+        git.fetch().call();
 
-            // 4) find if any branch name is equal to DeviceUdid_DeviceOS_ExecutionVenture
-            boolean branchExists = branches.stream()
-                    .anyMatch(ref -> ref.getName().equals("refs/heads/" + branchName));
+        // Check if the branch exists
+        boolean branchExists = git.branchList().call().stream()
+                .anyMatch(ref -> ref.getName().equals("refs/heads/" + branchName));
 
-
-            // 5) Do checkout else create a branch
-            if (branchExists) {
-                // Push the file to the existing branch
-                git.add().addFilepattern(fileToUploadPath).call();
-                git.commit().setMessage("Added file " + fileToUploadPath).call();
-                git.push().call();
-            } else {
-                // Create a new branch and push the file to it
-                git.checkout().setCreateBranch(true).setName(branchName).call();
-                git.add().addFilepattern(fileToUploadPath).call();
-                git.commit().setMessage("Added file " + fileToUploadPath).call();
-                git.push().setRemote("origin").setRefSpecs(new RefSpec(branchName + ":" + branchName)).call();
-            }
-
-            System.out.println("Git operations completed successfully.");
-
-        } catch (RefNotAdvertisedException e) {
-            System.out.println("Error: Remote origin did not advertise Ref for branch master.");
-            e.printStackTrace();
-        } catch (GitAPIException e) {
-            System.out.println("Error performing Git operations.");
-            e.printStackTrace();
+        // Do checkout else create a branch
+        if (branchExists) {
+            // Checkout the existing branch
+            git.checkout().setName(branchName).call();
+        } else {
+            // Create a new branch
+            git.checkout().setCreateBranch(true).setName(branchName).call();
         }
+
+        // Add the file to the staging area
+        git.add().addFilepattern(fileToUploadPath).call();
+
+        // Commit the changes
+        git.commit().setMessage("Added file " + fileToUploadPath).call();
+
+        // Push the changes to the remote repository
+        git.push().setRemote("origin").setRefSpecs(new RefSpec(branchName + ":" + branchName)).call();
     }
+
+
+
+
+
+    public static void performGitOperationsThree(String branchName, String fileToUploadPath) {
+//        try {
+//            // Open the local Git repository
+//            Repository repository = openLocalRepository();
+//
+//            // Create a new branch if it doesn't exist
+//            createBranchIfNotExists(repository, branchName);
+//
+//            // Stage and commit the new file
+//            stageAndCommitFile(String.valueOf(repository), fileToUploadPath);
+//
+//            // Push the changes to the remote repository
+//            pushChangesToRemote(repository, branchName);
+//
+//            // Clean up resources
+//            repository.close();
+//        } catch (IOException | GitAPIException e) {
+//            e.printStackTrace();
+//        }
+        deleteDirectory(new File("temp-repo"));
+            try {
+                // Open the existing online Git repository
+                Git git = Git.cloneRepository()
+                        .setURI(REMOTE_URL)
+                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD))
+                        .setDirectory(new File("temp-repo"))
+                        .call();
+
+                // Checkout the specified branch
+                git.checkout()
+                        .setName(branchName)
+                        .call();
+
+                // Add the new file to the repository
+                git.add()
+                        .addFilepattern(fileToUploadPath)
+                        .call();
+
+                // Commit the changes
+                git.commit()
+                        .setMessage("Added " + fileToUploadPath)
+                        .call();
+
+                // Push the changes to the remote repository
+                git.push()
+                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD))
+                        .call();
+
+                // Clean up the temporary local repository
+                git.getRepository().close();
+                deleteDirectory(new File("temp-repo"));
+            } catch (GitAPIException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void deleteDirectory(File directory) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
+        }
 
     public void performGitOperations(String deviceUdid, String deviceOS, String executionVenture) {
 

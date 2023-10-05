@@ -1,5 +1,7 @@
 package org.ddaSystem;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -119,13 +121,17 @@ public void generatePipeline(String ventureNameString, String deviceUdidString, 
         );
 
         // Write the pipelineScript to a file (e.g., Jenkinsfile.groovy)
-        String fileName = deviceUdidString + "_" + deviceOSVersionString + "_" + ventureNameString;
+        String fileName = deviceUdidString + "-" + deviceOSVersionString + "-" + ventureNameString.replaceAll("[^a-zA-Z0-9]","-");
         try (FileWriter writer = new FileWriter(fileName)) {
             writer.write(pipelineScript);
             //get new created file path and store it in a variable
             String filePath = new File(fileName).getAbsolutePath();
             System.out.println("Jenkinsfile written successfully.");
-            GitFunctions.performGitOperationsTwo(fileName,filePath);
+            try {
+                GitFunctions.performGitOperationsTwo(fileName,filePath);
+            } catch (GitAPIException e) {
+                throw new RuntimeException(e);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
