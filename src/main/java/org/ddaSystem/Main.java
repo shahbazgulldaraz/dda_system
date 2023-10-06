@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Main {
 
-    Basic basic = new Basic();
+    Base base = new Base();
     Random random = new Random();
 
 
@@ -25,7 +25,7 @@ public class Main {
 
     public static void main(String[] args) throws SQLException, IOException, InterruptedException {
             Main app = new Main();
-            Basic basic = new Basic();
+            Base base = new Base();
             CurlRequest curlRequest = new CurlRequest();
 
 
@@ -51,7 +51,7 @@ public class Main {
             System.out.println("Running at " + LocalDateTime.now());
             try {
                 curlRequest.curlRequest();
-                app.scheduleJobs(basic.getJobDetailsSortedByOSVersion(), basic.getVenturesWithPriorities());
+                app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
 
                 // Check if it's time to shutdown (after 7am)
                 if (LocalDateTime.now().isAfter(shutdownTime)) {
@@ -108,7 +108,7 @@ public class Main {
         for (int i = 0; i < maxLoopCount; i++) {
             for (Venture venture: ventureList) {
                 Collections.shuffle(jobs_names_list);
-                Buyer buyerInfo = basic.findAvailableBuyer(venture);
+                Buyer buyerInfo = base.findAvailableBuyer(venture);
                 allocateJobs(jobs_names_list.get(random.nextInt(jobs_names_list.size())), venture, buyerInfo);
                 }
         }
@@ -121,8 +121,8 @@ public class Main {
         System.out.println("Venture name is: " + ventureName);
         System.out.println("Buyer hash set is: " + buyerInfo + "\n\n\n");
         java.sql.Timestamp executionStartDate = new java.sql.Timestamp(System.currentTimeMillis());
-        System.out.println("I am about to insert this following."+ventureName+ " <::> " + jobName+ " <::> " +Integer.parseInt(basic.getJobOSVersion(jobName))+ " <::> " +buyerInfo+ " <::> " +executionStartDate);
-        basic.insertExecutionRecord(ventureName, jobName, Integer.parseInt(basic.getJobOSVersion(jobName)), buyerInfo, executionStartDate);
+        System.out.println("I am about to insert this following."+ventureName+ " <::> " + jobName+ " <::> " +Integer.parseInt(base.getJobOSVersion(jobName))+ " <::> " +buyerInfo+ " <::> " +executionStartDate);
+        base.insertExecutionRecord(ventureName, jobName, Integer.parseInt(base.getJobOSVersion(jobName)), buyerInfo, executionStartDate);
         String ventureNameString = ventureName.getName();
         String deviceUdidString = jobName;
         String buyerEmailString = buyerInfo.getEmail();
@@ -132,7 +132,7 @@ public class Main {
         System.out.println("Sending curl request to the device: " + deviceUdidString);
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
 
-        basic.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
+        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         // Generate a random number between 5000 and 10000 (5 to 10 seconds)
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
         System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.");

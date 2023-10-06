@@ -12,15 +12,17 @@ import org.json.JSONArray;
 
 public class CurlRequest {
 
+    Base base = new Base();
+
     // Initialize lists to store job names and their statuses
     public List<String> jobNames = new ArrayList<>();
     public List<String> jobStatus = new ArrayList<>();
 
     // Set Jenkins credentials
-    String base_url = "http://30.216.6.58:8080/job/daraz-android-jenkins/api/json";
+    String base_url = base.constructURL("/job/daraz-android-jenkins/api/json");
 
-    String job_url ="http://30.216.6.58:8080/job/daraz-android-jenkins/job/";
-    String jenkins_queue_url = "http://30.216.6.58:8080/queue/api/json";
+    String job_url =base.constructURL("/job/daraz-android-jenkins/job/");
+    String jenkins_queue_url = base.constructURL("/queue/api/json");
 
     String jSon_path = "/api/json";
     String username ="shahbaz";
@@ -31,7 +33,7 @@ public class CurlRequest {
     // Define the path to save the JSON output
     String outputFilePath = "output.json";
 
-    Basic base = new Basic();
+
 
     // Main method for making CURL request and processing response
     public void curlRequest() {
@@ -160,19 +162,19 @@ public class CurlRequest {
                 // Print the information about the last build
                 System.out.println("-------------------------------------");
                 System.out.println("Job Name: " + jobName);
-                Basic basic = new Basic();
+                Base base = new Base();
                 System.out.println("Last Build Number: " + lastBuildNumber);
                 System.out.println("Build inProgress: " + inProgress);
                 System.out.println("Build Status: " + result);
-                System.out.println("Build TimeStamp: " + Basic.convertToReadableDateAndTimeFormat(Long.parseLong(TimeStamp)));
-                System.out.println("Build Duration: " + Basic.convertToReadableTimeFormat(Long.parseLong(duration)));
-                System.out.println("Build Estimated Duration: " + Basic.convertToReadableTimeFormat(Long.parseLong(estimatedDuration)));
+                System.out.println("Build TimeStamp: " + Base.convertToReadableDateAndTimeFormat(Long.parseLong(TimeStamp)));
+                System.out.println("Build Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(duration)));
+                System.out.println("Build Estimated Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(estimatedDuration)));
                 System.out.println("Next Build Number: " + NextBuildNumber);
                 Boolean job_in_queue = isJobInQueue(jobName, sendCurlGetRequest(jenkins_queue_url, username, password));
                 System.out.println("Job in queue >>>>>>: " + job_in_queue);
-                basic.storeJobDetailsInDB(jobName,inProgress,job_in_queue);
+                base.storeJobDetailsInDB(jobName,inProgress,job_in_queue);
                 System.out.println("Job details stored in DB");
-                System.out.println(basic.getJobDetailsSortedByOSVersion());
+                System.out.println(base.getJobDetailsSortedByOSVersion());
 
                 System.out.println("-------------------------------------");
 

@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Basic {
+public class Base {
     Random random = new Random();
 
 
@@ -340,9 +340,18 @@ public class Basic {
                 e.printStackTrace();
             }
         }
-
     }
 
+    public String constructURL(String Path) {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("linux")|| osName.contains("Ubuntu")) {
+            // If the operating system is Linux
+            return "http://localhost:8080"+Path;
+        } else {
+            // If the operating system is macOS
+            return "http://30.216.6.58:8080"+Path;
+        }
+    }
 
 
     public void updateDeviceInformation(List<String> devices) {
@@ -512,6 +521,8 @@ public class Basic {
         }
         return jobDetails;
     }
+
+
 
     public void DeviceStatusScheduler(String deviceUdids, String Status) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
