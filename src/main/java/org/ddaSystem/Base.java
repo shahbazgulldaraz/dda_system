@@ -21,7 +21,7 @@ public class Base {
     Random random = new Random();
 
 
-    private static final String DATABASE_URL = "jdbc:sqlite:DDASystem.db";
+    private final String DATABASE_URL = databaseURL();
 
 
     public List<String> getConnectedDevices() throws IOException, InterruptedException {
@@ -350,6 +350,17 @@ public class Base {
         } else {
             // If the operating system is macOS
             return "http://30.216.6.58:8080"+Path;
+        }
+    }
+
+    public String databaseURL() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("linux")|| osName.contains("Ubuntu")) {
+            // If the operating system is Linux
+            return "/mnt/storage1/configs/DDASystem.db";
+        } else {
+            // If the operating system is macOS
+            return "jdbc:sqlite:DDASystem.db";
         }
     }
 
