@@ -123,19 +123,19 @@ public class JenkinsPipelineReader {
     }
 
 
-    public static void main(String[] args) throws GitAPIException {
-        final String REMOTE_URL = "https://github.com/shahbazgulldaraz/daraz-android-jenkins.git";
-        final String USERNAME = "shahbaz.gull@daraz.com";
-        final String PASSWORD = "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";
-//        final String PASSWORD = "Sarkar@10085";
-
-        Map<String, String> branchStrings = extractStringsFromJenkinsFiles(REMOTE_URL, USERNAME, PASSWORD);
-
-        // Print the branch names and extracted strings
-        for (Map.Entry<String, String> entry : branchStrings.entrySet()) {
-            System.out.println("Branch Name: " + entry.getKey());
-            System.out.println("Extracted Strings: " + entry.getValue());
-            System.out.println("-----------------------------");
-        }
-    }
+//    public static void main(String[] args) throws GitAPIException {
+//        final String REMOTE_URL = "https://github.com/shahbazgulldaraz/daraz-android-jenkins.git";
+//        final String USERNAME = "shahbaz.gull@daraz.com";
+//        final String PASSWORD = "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";
+////        final String PASSWORD = "Sarkar@10085";
+//
+//        Map<String, String> branchStrings = extractStringsFromJenkinsFiles(REMOTE_URL, USERNAME, PASSWORD);
+//
+//        // Print the branch names and extracted strings
+//        for (Map.Entry<String, String> entry : branchStrings.entrySet()) {
+//            System.out.println("Branch Name: " + entry.getKey());
+//            System.out.println("Extracted Strings: " + entry.getValue());
+//            System.out.println("-----------------------------");
+//        }
+//    }
 }

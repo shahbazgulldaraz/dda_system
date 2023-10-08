@@ -27,41 +27,42 @@ public class Main {
             Main app = new Main();
             Base base = new Base();
             CurlRequest curlRequest = new CurlRequest();
+             curlRequest.curlRequest();
+            app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
 
-
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        // Get the current time
-        LocalDateTime now = LocalDateTime.now();
-
-        // Calculate the initial delay until 10pm
-        LocalTime tenPM = LocalTime.of(22, 0); // 10:00 PM
-        LocalDateTime nextExecutionTime = LocalDateTime.of(now.toLocalDate(), tenPM);
-        if (now.isAfter(nextExecutionTime)) {
-            nextExecutionTime = nextExecutionTime.plusDays(1); // Schedule for tomorrow if it's already past 10pm
-        }
-        Duration initialDelay = Duration.between(now, nextExecutionTime);
-
-        // Calculate the shutdown time at 7am
-        LocalTime sevenAM = LocalTime.of(7, 0); // 7:00 AM
-        LocalDateTime shutdownTime = LocalDateTime.of(now.toLocalDate().plusDays(1), sevenAM); // Tomorrow at 7am
-
-        // Schedule the task
-        scheduler.scheduleAtFixedRate(() -> {
-            System.out.println("Running at " + LocalDateTime.now());
-            try {
-                curlRequest.curlRequest();
-                app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
-
-                // Check if it's time to shutdown (after 7am)
-                if (LocalDateTime.now().isAfter(shutdownTime)) {
-                    System.out.println("Shutting down...");
-                    System.exit(0);
-                }
-            } catch (SQLException | IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }, initialDelay.toSeconds(), 24 * 60 * 60, TimeUnit.SECONDS); // 24 hours interval (for daily execution)
+//        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+//
+//        // Get the current time
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        // Calculate the initial delay until 10pm
+//        LocalTime tenPM = LocalTime.of(22, 0); // 10:00 PM
+//        LocalDateTime nextExecutionTime = LocalDateTime.of(now.toLocalDate(), tenPM);
+//        if (now.isAfter(nextExecutionTime)) {
+//            nextExecutionTime = nextExecutionTime.plusDays(1); // Schedule for tomorrow if it's already past 10pm
+//        }
+//        Duration initialDelay = Duration.between(now, nextExecutionTime);
+//
+//        // Calculate the shutdown time at 7am
+//        LocalTime sevenAM = LocalTime.of(7, 0); // 7:00 AM
+//        LocalDateTime shutdownTime = LocalDateTime.of(now.toLocalDate().plusDays(1), sevenAM); // Tomorrow at 7am
+//
+//        // Schedule the task
+//        scheduler.scheduleAtFixedRate(() -> {
+//            System.out.println("Running at " + LocalDateTime.now());
+//            try {
+//             curlRequest.curlRequest();
+//            app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
+//
+//                // Check if it's time to shutdown (after 7am)
+//                if (LocalDateTime.now().isAfter(shutdownTime)) {
+//                    System.out.println("Shutting down...");
+//                    System.exit(0);
+//                }
+//            } catch (SQLException | IOException | InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }, initialDelay.toSeconds(), 24 * 60 * 60, TimeUnit.SECONDS); // 24 hours interval (for daily execution)
     }
 
 
@@ -130,10 +131,8 @@ public class Main {
         //send curl request calling curl here
         CurlRequest curlRequest = new CurlRequest();
         System.out.println("Sending curl request to the device: " + deviceUdidString);
-        curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
-
-        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
-        // Generate a random number between 5000 and 10000 (5 to 10 seconds)
+//        curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
+//        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
         System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.");
         Thread.sleep(sleepTime);
