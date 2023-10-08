@@ -25,6 +25,21 @@
                     <target>1.8</target> <!-- Set this to your desired Java version -->
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>org.ddaSystem.Main</mainClass>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
