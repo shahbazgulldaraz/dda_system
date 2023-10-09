@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -51,6 +52,8 @@ public class CurlRequest {
             getJobInfo(jobNames);
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -189,7 +192,7 @@ public class CurlRequest {
 
 
     // write a method which will check if the job is in queue or not
-    public boolean isJobInQueue(String jobName, String queueJson) {
+    public boolean isJobInQueue(String jobName, String queueJson) throws JSONException {
         JSONObject queueObj = new JSONObject(queueJson);
         JSONArray items = queueObj.getJSONArray("items");
 
@@ -212,7 +215,7 @@ public class CurlRequest {
 
 
     // Method to print job statuses from a JSONObject and return a list of job names
-    public List<String> printJobStatus(JSONObject jobObject) {
+    public List<String> printJobStatus(JSONObject jobObject) throws JSONException {
         JSONArray jobsArray = new JSONArray(jobObject.getJSONArray("jobs").toString());  // Get jobs array
         for (int i = 0; i < jobsArray.length(); i++) {  // Loop through jobs
             JSONObject job = jobsArray.getJSONObject(i);  // Get each job as a JSONObject

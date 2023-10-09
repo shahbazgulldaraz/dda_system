@@ -1,7 +1,5 @@
 package org.ddaSystem;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -128,8 +126,8 @@ public void generatePipeline(String ventureNameString, String deviceUdidString, 
             String filePath = new File(fileName).getAbsolutePath();
             System.out.println("Jenkinsfile written successfully.");
             try {
-                GitFunctions.performGitOperationsTwo(fileName,filePath);
-            } catch (GitAPIException e) {
+//                GitFunctions.performGitOperationsTwo(fileName,filePath);
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         } catch (IOException e) {

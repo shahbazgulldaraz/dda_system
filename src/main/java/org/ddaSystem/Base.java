@@ -1,5 +1,6 @@
 package org.ddaSystem;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
 
@@ -582,6 +583,8 @@ public class Base {
     public void writeJsonToFile(JSONObject json, String filePath) throws IOException {
         try (FileWriter fileWriter = new FileWriter(filePath)) {
             fileWriter.write(json.toString(4));  // Write JSON with 4-space indentation
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
     }
 
