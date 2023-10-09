@@ -520,7 +520,7 @@ public class Base {
     //get Job details from Jenkins_Jobs table in descending order of Device_Os_Version
     public List<String> getJobDetailsSortedByOSVersion() throws SQLException {
         List<String> jobDetails = new ArrayList<>();
-        String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Device_Is_Free = 0 ORDER BY Device_Os_Version DESC";
+        String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Device_Is_Free = 1 ORDER BY Device_Os_Version DESC";
 
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
