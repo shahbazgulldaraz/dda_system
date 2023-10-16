@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
 
+import javax.print.attribute.standard.JobName;
 import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -472,47 +473,60 @@ public class Base {
     // This method will return the list of devices from  Jenkins_Jobs table in descending order.
 
     public void storeJobDetailsInDB(String jobName, boolean inProgress, Boolean job_in_queue) {
-        // Define a pattern to match "deviceName_os_version" format
-        Pattern pattern = Pattern.compile("^(\\w+)_os_(\\d+)$");
-        Matcher matcher = pattern.matcher(jobName);
+        String deviceName;
+        String osVersion;
 
-        if (matcher.matches()) {
-            String deviceName = matcher.group(1);
-            String osVersion = matcher.group(2);
+        if (jobName.matches("^(\\w+)_os_(\\d+)$")) {
+            Matcher matcher = Pattern.compile("^(\\w+)_os_(\\d+)$").matcher(jobName);
+            matcher.matches();
+            deviceName = matcher.group(1);
+            osVersion = matcher.group(2);
+        } else if (jobName.contains("Samsung_Galaxy_S8")) {
+            System.out.println("These are the invalid Job Names Samsung Galaxy S8:>"+jobName);
+            deviceName = jobName;
+            osVersion = "9";
+        } else {
+            System.out.println("These are the invalid Job Names:>"+jobName);
+            return;
+        }
 
-            try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
-                String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
-                try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
-                    selectStatement.setString(1, jobName);
-                    ResultSet resultSet = selectStatement.executeQuery();
+        insertJobNameAndOSInDB(jobName, deviceName, osVersion, inProgress, job_in_queue);
+    }
 
-                    if (resultSet.next()) {
-                        // If the job already exists, update its columns
-                        String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
-                        try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-                            updateStatement.setString(1, deviceName);
-                            updateStatement.setString(2, osVersion);
-                            updateStatement.setBoolean(3, !inProgress);
-                            updateStatement.setBoolean(4, job_in_queue);
-                            updateStatement.setString(5, jobName);
-                            updateStatement.executeUpdate();
-                        }
-                    } else {
-                        // If the job doesn't exist, insert a new record
-                        String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?)";
-                        try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
-                            insertStatement.setString(1, jobName);
-                            insertStatement.setString(2, deviceName);
-                            insertStatement.setString(3, osVersion);
-                            insertStatement.setBoolean(4, !inProgress);
-                            insertStatement.setBoolean(5, job_in_queue);
-                            insertStatement.executeUpdate();
-                        }
+
+    private void insertJobNameAndOSInDB(String jobName, String deviceName, String osVersion, boolean inProgress, Boolean job_in_queue) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
+            String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
+            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
+                selectStatement.setString(1, jobName);
+                ResultSet resultSet = selectStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    // If the job already exists, update its columns
+                    String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
+                    try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                        updateStatement.setString(1, deviceName);
+                        updateStatement.setString(2, osVersion);
+                        updateStatement.setBoolean(3, !inProgress);
+                        updateStatement.setBoolean(4, job_in_queue);
+                        updateStatement.setString(5, jobName);
+                        updateStatement.executeUpdate();
+                    }
+                } else {
+                    // If the job doesn't exist, insert a new record
+                    String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
+                        insertStatement.setString(1, jobName);
+                        insertStatement.setString(2, deviceName);
+                        insertStatement.setString(3, osVersion);
+                        insertStatement.setBoolean(4, !inProgress);
+                        insertStatement.setBoolean(5, job_in_queue);
+                        insertStatement.executeUpdate();
                     }
                 }
-            } catch (SQLException e) {
-                e.printStackTrace(); // Handle the exception appropriately
             }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle the exception appropriately
         }
     }
 
