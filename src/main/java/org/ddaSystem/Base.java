@@ -132,31 +132,6 @@ public class Base {
         }
     }
 
-//    public void insertExecutionRecord(Venture venture, String device, int deviceOSVersion, Buyer buyer, String executionStartTime, String executionEndTime) {
-//        String insertQuery = "INSERT INTO Execution (Execution_venture, Execution_Device, Execution_Device_OS_Version, Execution_Buyer, Execution_Date, Execution_Time_End) " +
-//                "VALUES (?, ?, ?, ?, ?, ?)";
-//
-//        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-//             PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-//
-//            // Set the values for the PreparedStatement
-//            preparedStatement.setString(1, venture.getName());
-//            preparedStatement.setString(2, device);
-//            preparedStatement.setInt(3, deviceOSVersion);
-//            preparedStatement.setString(4, buyer.getEmail());
-//            preparedStatement.setString(5, executionStartTime); // Start time
-//            preparedStatement.setString(6, executionEndTime); // End time
-//
-//            // Execute the INSERT query
-//            preparedStatement.executeUpdate();
-//
-//            System.out.println("Execution record inserted successfully.");
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//            System.err.println("Error inserting execution record: " + e.getMessage());
-//        }
-//    }
-
 
     public void insertExecutionRecord(Venture venture, String device, int deviceOSVersion, Buyer buyer, java.sql.Timestamp startTime) throws SQLException {
         String insertQuery = "INSERT INTO Execution (Execution_venture, Execution_Device, Execution_Device_OS_Version, Execution_Buyer,Execution_Buyer_Password, Execution_Date) " +
@@ -182,6 +157,28 @@ public class Base {
             preparedStatement.executeUpdate();
 
             System.out.println("Execution record inserted successfully.");
+        }
+        updateJobIsFreeOrOccupied(venture.getName(),false);
+        updateBuyerIsFreeOrOccopied(buyer.getEmail(),false);
+    }
+
+    private void updateBuyerIsFreeOrOccopied(String email, boolean b) {
+        String updateQuery = "UPDATE Buyers SET Buyer_Free = ? WHERE Buyer_Email = ?";
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            // Set the values for the PreparedStatement
+            preparedStatement.setBoolean(1, b);
+            preparedStatement.setString(2, email);
+
+            // Execute the UPDATE query
+            preparedStatement.executeUpdate();
+
+            System.out.println("Buyer free or occupied updated successfully.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error updating buyer free or occupied: " + e.getMessage());
         }
     }
 
@@ -229,62 +226,31 @@ public class Base {
 
 
 
+    public void cleanUpDataBase() {
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+             Statement statement = connection.createStatement()) {
 
+            String[] queries = {
+                    "PRAGMA foreign_keys=off;",
+                    "DELETE FROM Jenkins_jobs;",
+                    "DELETE FROM Execution;",
+                    "UPDATE Buyers SET Buyer_Free =1;",
+                    "PRAGMA foreign_keys=on;"
+            };
 
-    //write a method to update dummy records in the database as per the DDL mentioned above.
-    public void insertDummyRecords(){
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
+            for (String query : queries) {
+                statement.execute(query);
+            }
 
-        }catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println("Database Cleaned!!!! \nQueries executed successfully.!!!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
 
-//    public void updateDeviceInfo(List<String> devices) {
-//        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
-//            for (String device : devices) {
-//                String currentState = executeAdbCommand(device, " shell dumpsys window | grep \"mCurrentFocus\"").contains("com.daraz.android") ? "Occupied" : "Vacant";
-//                String osVersion = executeAdbCommand(device, " shell getprop ro.build.version.release");
-//                String deviceModel = executeAdbCommand(device, " shell getprop ro.product.model");
-//                String deviceManufacturer = executeAdbCommand(device, " shell getprop ro.product.manufacturer");
-//                String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-//
-//                // Check if the record for the device already exists in the database
-//                String checkQuery = "SELECT * FROM Devices WHERE DeviceName = ?";
-//                try (PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
-//                    checkStatement.setString(1, device);
-//                    if (checkStatement.executeQuery().next()) {
-//                        // Update the record
-//                        String updateQuery = "UPDATE Devices SET CurrentState = ?, Made = ?, Model = ?, DeviceStatus = ?, CreatedDate = ? WHERE DeviceName = ?";
-//                        try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-//                            updateStatement.setString(1, currentState);
-//                            updateStatement.setString(2, deviceManufacturer);
-//                            updateStatement.setString(3, deviceModel);
-//                            updateStatement.setString(4, osVersion);
-//                            updateStatement.setString(5, currentDate);
-//                            updateStatement.setString(6, device);
-//                            updateStatement.executeUpdate();
-//                        }
-//                    } else {
-//                        // Insert a new record
-//                        String insertQuery = "INSERT INTO Devices (DeviceName, CurrentState, Made, Model, DeviceStatus, CreatedDate) VALUES (?, ?, ?, ?, ?, ?)";
-//                        try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
-//                            insertStatement.setString(1, device);
-//                            insertStatement.setString(2, currentState);
-//                            insertStatement.setString(3, deviceManufacturer);
-//                            insertStatement.setString(4, deviceModel);
-//                            insertStatement.setString(5, osVersion);
-//                            insertStatement.setString(6, currentDate);
-//                            insertStatement.executeUpdate();
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (SQLException | IOException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
 
     //this method will take the UDID as a string and run adb command to get the device information and update the Device_Free column in Device table.
     public boolean updateDeviceIsFree(String udid) throws InterruptedException {

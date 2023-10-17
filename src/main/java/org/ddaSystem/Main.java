@@ -22,6 +22,7 @@ public class Main {
     public static void main(String[] args) throws SQLException, IOException, InterruptedException {
             Main app = new Main();
             Base base = new Base();
+            base.cleanUpDataBase();
             CurlRequest curlRequest = new CurlRequest();
              curlRequest.curlRequest();
             app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
@@ -59,10 +60,11 @@ public class Main {
         String buyerEmailString = buyerInfo.getEmail();
         String buyerPasswordString = buyerInfo.getPassword();
         //send curl request calling curl here
+
         CurlRequest curlRequest = new CurlRequest();
         System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ buyerEmailString +" <::> "+ buyerPasswordString +" <::> "+ventureNameString);
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
-        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
+//        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
 //        System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.");
         Thread.sleep(sleepTime);
