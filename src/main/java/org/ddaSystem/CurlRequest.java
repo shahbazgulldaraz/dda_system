@@ -89,7 +89,8 @@ public class CurlRequest {
         System.out.println("This is the env: "+env);
 
         // Define your data parameters
-        String data = "TAG_NAME=your_tag_name" +
+        String data = "TAG_NAME=" +
+                "&EMAIL="+buyer_username +
                 "&BRANCH=master" +
                 "&REGRESSION_TYPE=Smoke" +
                 "&RERUN_FAILED_ONLY=NO" +
@@ -175,6 +176,8 @@ public class CurlRequest {
                 System.out.println("Next Build Number: " + NextBuildNumber);
                 Boolean job_in_queue = isJobInQueue(jobName, sendCurlGetRequest(jenkins_queue_url, username, password));
                 System.out.println("Job in queue >>>>>>: " + job_in_queue);
+                // if inProgress is true and job_in_queue is false then update the job status is free
+                // if inProgress is false and job_in_queue is true then update the job status is false
                 base.storeJobDetailsInDB(jobName,inProgress,job_in_queue);
                 System.out.println("Job details stored in DB");
                 System.out.println(base.getJobDetailsSortedByOSVersion());

@@ -433,8 +433,8 @@ public class Base {
                 if (resultSet.next()) {
                     String email = resultSet.getString("Buyer_Email");
                     String password = resultSet.getString("Buyer_Password");
-                    String status = resultSet.getString("Buyer_Free");
                     String buyerVenture = resultSet.getString("Buyer_Venture");
+                    String status = resultSet.getString("Buyer_Free");
                     buyer = new Buyer(email, password, status, buyerVenture);
                 }
             }
@@ -494,7 +494,7 @@ public class Base {
     }
 
 
-    private void insertJobNameAndOSInDB(String jobName, String deviceName, String osVersion, boolean inProgress, Boolean job_in_queue) {
+    private void insertJobNameAndOSInDB(String jobName, String deviceName, String osVersion, boolean inProgress, boolean job_in_queue) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
             String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
             try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
@@ -534,12 +534,12 @@ public class Base {
     //get Job details from Jenkins_Jobs table in descending order of Device_Os_Version
     public List<String> getJobDetailsSortedByOSVersion() throws SQLException {
         List<String> jobDetails = new ArrayList<>();
-        String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Device_Is_Free = 1 ORDER BY Device_Os_Version DESC";
+        String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Job_In_Queue = 0 ORDER BY Device_Os_Version DESC";
 
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-             ResultSet resultSet = selectStatement.executeQuery()) {
-
+             ResultSet resultSet = selectStatement.executeQuery())
+        {
             while (resultSet.next()) {
                 String jobName = resultSet.getString("Job_Name");
                 jobDetails.add(jobName);
