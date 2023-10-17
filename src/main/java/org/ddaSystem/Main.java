@@ -48,11 +48,11 @@ public class Main {
 
 
     private void allocateJobs(String jobName, Venture ventureName, Buyer buyerInfo) throws SQLException, InterruptedException, IOException {
-        System.out.println("Device UDID is: " + jobName);
-        System.out.println("Venture name is: " + ventureName.getName());
-        System.out.println("Buyer hash set is: " + buyerInfo.getEmail() + "\n\n\n");
+//        System.out.println("Device UDID is: " + jobName);
+//        System.out.println("Venture name is: " + ventureName.getName());
+//        System.out.println("Buyer hash set is: " + buyerInfo.getEmail() + "\n\n\n");
         java.sql.Timestamp executionStartDate = new java.sql.Timestamp(System.currentTimeMillis());
-        System.out.println("I am about to insert this following."+ventureName+ " <::> " + jobName+ " <::> " +Integer.parseInt(base.getJobOSVersion(jobName))+ " <::> " +buyerInfo+ " <::> " +executionStartDate);
+//        System.out.println("I am about to insert this following."+ventureName+ " <::> " + jobName+ " <::> " +Integer.parseInt(base.getJobOSVersion(jobName))+ " <::> " +buyerInfo+ " <::> " +executionStartDate);
         base.insertExecutionRecord(ventureName, jobName, Integer.parseInt(base.getJobOSVersion(jobName)), buyerInfo, executionStartDate);
         String ventureNameString = ventureName.getName();
         String deviceUdidString = jobName;
@@ -60,7 +60,7 @@ public class Main {
         String buyerPasswordString = buyerInfo.getPassword();
         //send curl request calling curl here
         CurlRequest curlRequest = new CurlRequest();
-        System.out.println("Sending curl request to the device: " + deviceUdidString);
+        System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ buyerEmailString +" <::> "+ buyerPasswordString +" <::> "+ventureNameString);
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
         base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;

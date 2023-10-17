@@ -83,10 +83,10 @@ public class CurlRequest {
 
 
     public String sendCurlPostRequest(String Job_name, String buyer_username, String buyer_password, String env) throws IOException {
-        System.out.println("This is the job name: "+Job_name);
-        System.out.println("This is the buyer username: "+buyer_username);
-        System.out.println("This is the buyer password: "+buyer_password);
-        System.out.println("This is the env: "+env);
+//        System.out.println("This is the job name: "+Job_name);
+//        System.out.println("This is the buyer username: "+buyer_username);
+//        System.out.println("This is the buyer password: "+buyer_password);
+//        System.out.println("This is the env: "+env);
 
         // Define your data parameters
         String data = "TAG_NAME=" +
@@ -147,7 +147,7 @@ public class CurlRequest {
                 String apiLastBuildUrl = job_url + jobName + "/" + lastBuildNumber + jSon_path;
 
                 // Print the URL of the last build
-                System.out.println("This is the Last build URL: " + apiLastBuildUrl);
+//                System.out.println("This is the Last build URL: " + apiLastBuildUrl);
 
                 // Send a CURL request to get information about the last build
                 jsonObject = new JSONObject(sendCurlGetRequest(apiLastBuildUrl, username, password));

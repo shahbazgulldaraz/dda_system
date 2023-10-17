@@ -44,7 +44,7 @@ public class Base {
         }
         if (devices.isEmpty()) {
             System.out.println("\n\n\nNo device connected to the system. Terminating the program.!!!!\n\n\n");
-//            System.exit(0); Temprary blocked for development.
+            System.exit(0);
         } else {
             System.out.println("\n\nConnected devices are >> " + devices);
         }
@@ -482,7 +482,6 @@ public class Base {
             deviceName = matcher.group(1);
             osVersion = matcher.group(2);
         } else if (jobName.contains("Samsung_Galaxy_S8")) {
-            System.out.println("These are the invalid Job Names Samsung Galaxy S8:>"+jobName);
             deviceName = jobName;
             osVersion = "9";
         } else {
