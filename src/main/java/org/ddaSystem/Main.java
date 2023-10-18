@@ -24,8 +24,8 @@ public class Main {
             Main app = new Main();
             Base base = new Base();
             base.cleanUpDataBase();
-//            CurlRequest curlRequest = new CurlRequest();
-//             curlRequest.curlRequest();
+            CurlRequest curlRequest = new CurlRequest();
+             curlRequest.curlRequest();
             app.scheduleJobs(base.getJobDetailsSortedByOSVersion(), base.getVenturesWithPriorities());
     }
 
