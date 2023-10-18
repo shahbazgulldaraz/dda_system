@@ -212,11 +212,6 @@ public class CurlRequest {
     }
 
 
-
-
-
-
-
     // Method to print job statuses from a JSONObject and return a list of job names
     public List<String> printJobStatus(JSONObject jobObject) throws JSONException {
         JSONArray jobsArray = new JSONArray(jobObject.getJSONArray("jobs").toString());  // Get jobs array

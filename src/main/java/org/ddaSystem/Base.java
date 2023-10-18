@@ -182,50 +182,6 @@ public class Base {
         }
     }
 
-    public void updateExecutionEndTime(Venture venture, String device, java.sql.Timestamp startTime, java.sql.Timestamp endTime) throws SQLException {
-        String updateQuery = "UPDATE Execution SET Execution_Time_End = ? WHERE Execution_venture = ? AND Execution_Device = ? AND Execution_Date = ?";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
-
-            // Set the values for the PreparedStatement
-            preparedStatement.setTimestamp(1, endTime);
-            preparedStatement.setString(2, venture.getName());
-            preparedStatement.setString(3, device);
-            preparedStatement.setTimestamp(4, startTime);
-
-            // Execute the UPDATE query
-            preparedStatement.executeUpdate();
-
-            System.out.println("Execution end time updated successfully.");
-        }
-    }
-
-    public void updateExecutionEndTime(String deviceUDID, String ventureName) throws SQLException {
-        String updateQuery = "UPDATE Execution SET Execution_Time_End = ? WHERE Execution_Device = ? AND Execution_venture = ?";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
-
-            // Get the current timestamp
-            java.sql.Timestamp currentTime = new java.sql.Timestamp(System.currentTimeMillis());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String formattedCurrentTime = dateFormat.format(new Date(currentTime.getTime()));
-
-            // Set the values for the PreparedStatement
-            preparedStatement.setString(1, formattedCurrentTime);
-            preparedStatement.setString(2, deviceUDID);
-            preparedStatement.setString(3, ventureName);
-
-            // Execute the UPDATE query
-            preparedStatement.executeUpdate();
-
-            System.out.println("Execution end time updated successfully.");
-        }
-    }
-
-
-
     public void cleanUpDataBase() {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              Statement statement = connection.createStatement()) {
@@ -249,35 +205,6 @@ public class Base {
         }
     }
 
-
-
-
-    //this method will take the UDID as a string and run adb command to get the device information and update the Device_Free column in Device table.
-    public boolean updateDeviceIsFree(String udid) throws InterruptedException {
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
-//            boolean device_free = executeAdbCommand(udid, " shell dumpsys window | grep \"mCurrentFocus\"").contains("com.daraz.android") ? true : false;
-            int device_free = random.nextInt(1 - 0 + 1) + 0;
-//            if (device_free == 0){
-//                //thread sleep for random between 1 to 3 minutes
-//                Thread.sleep((random.nextInt(3 - 1 + 1) + 1)*60*1000);
-//            }
-            String updateQuery = "UPDATE Devices SET Device_Free = ? WHERE Device_UDID = ?";
-            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-                updateStatement.setString(1, String.valueOf(device_free));
-                updateStatement.setString(2, udid);
-                updateStatement.executeUpdate();
-            }
-            if(device_free == 0){
-                System.out.println("\n\n\nDevice " + udid + " is occupied-updateDeviceIsFree\n\n\n");
-                return false;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-                System.out.println("\n\n\nDevice " + udid + " is free-updateDeviceIsFree\n\n\n");
-                return true;
-
-    }
 
     //this method will update the Device_Free column in Device table.
     public void updateDeviceIsFreeOrOccupied(String deviceUdid,String FreeOrNot) throws SQLException {
@@ -471,7 +398,7 @@ public class Base {
                     String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
                     try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
                         updateStatement.setString(1, deviceName);
-                        updateStatement.setString(2, osVersion);
+                        updateStatement.setInt(2, Integer.parseInt(osVersion));
                         updateStatement.setBoolean(3, !inProgress);
                         updateStatement.setBoolean(4, job_in_queue);
                         updateStatement.setString(5, jobName);
@@ -483,7 +410,7 @@ public class Base {
                     try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
                         insertStatement.setString(1, jobName);
                         insertStatement.setString(2, deviceName);
-                        insertStatement.setString(3, osVersion);
+                        insertStatement.setInt(3, Integer.parseInt(osVersion));
                         insertStatement.setBoolean(4, !inProgress);
                         insertStatement.setBoolean(5, job_in_queue);
                         insertStatement.executeUpdate();
