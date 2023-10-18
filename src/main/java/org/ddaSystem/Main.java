@@ -60,7 +60,8 @@ public class Main {
 
     private void allocateJobs(String jobName, Venture ventureName, Buyer buyerInfo) throws SQLException, InterruptedException, IOException {
         java.sql.Timestamp executionStartDate = new java.sql.Timestamp(System.currentTimeMillis());
-        base.insertExecutionRecord(ventureName, jobName, Integer.parseInt(base.getJobOSVersion(jobName)), buyerInfo, executionStartDate);
+        int jobOSVersion=Integer.parseInt(base.getJobOSVersion(jobName));
+        base.insertExecutionRecord(ventureName, jobName,jobOSVersion , buyerInfo, executionStartDate);
         String ventureNameString = ventureName.getName();
         String deviceUdidString = jobName;
         String buyerEmailString = buyerInfo.getEmail();
@@ -68,7 +69,7 @@ public class Main {
         //send curl request calling curl here
 
         CurlRequest curlRequest = new CurlRequest();
-        System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ buyerEmailString +" <::> "+ventureNameString);
+        System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ jobOSVersion +" <::> "+ buyerEmailString +" <::> "+ventureNameString);
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
 //        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
