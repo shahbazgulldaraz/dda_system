@@ -158,7 +158,8 @@ public class Base {
 
             System.out.println("Execution record inserted successfully.");
         }
-        updateJobIsFreeOrOccupied(venture.getName(),false);
+        System.out.println("This is teh device name:>"+device);
+        updateJobIsFreeOrOccupied(device,false);
         updateBuyerIsFreeOrOccopied(buyer.getEmail(),false);
     }
 
@@ -186,10 +187,11 @@ public class Base {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              Statement statement = connection.createStatement()) {
 
-            String[] queries = {
+                    String[] queries = {
                     "PRAGMA foreign_keys=off;",
-                    "DELETE FROM Jenkins_jobs;",
-                    "DELETE FROM Execution;",
+//                    "DELETE FROM Execution;",
+//                    "DELETE FROM Jenkins_jobs;",
+                    "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
                     "UPDATE Buyers SET Buyer_Free =1;",
                     "PRAGMA foreign_keys=on;"
             };
@@ -230,6 +232,7 @@ public class Base {
                 updateStatement.setBoolean(1, FreeOrNot);
                 updateStatement.setString(2, JobName);
                 updateStatement.executeUpdate();
+                System.out.println("I am about to update Jobs "+ JobName+" to "+FreeOrNot);
             }
             catch (SQLException e) {
                 e.printStackTrace();
