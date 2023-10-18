@@ -156,9 +156,8 @@ public class Base {
             // Execute the INSERT query
             preparedStatement.executeUpdate();
 
-            System.out.println("Execution record inserted successfully.");
+//            System.out.println("Execution record inserted successfully.");
         }
-        System.out.println("This is teh device name:>"+device);
         updateJobIsFreeOrOccupied(device,false);
         updateBuyerIsFreeOrOccopied(buyer.getEmail(),false);
     }
@@ -176,7 +175,7 @@ public class Base {
             // Execute the UPDATE query
             preparedStatement.executeUpdate();
 
-            System.out.println("Buyer free or occupied updated successfully.");
+//            System.out.println("Buyer free or occupied updated successfully.");
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("Error updating buyer free or occupied: " + e.getMessage());
@@ -232,7 +231,6 @@ public class Base {
                 updateStatement.setBoolean(1, FreeOrNot);
                 updateStatement.setString(2, JobName);
                 updateStatement.executeUpdate();
-                System.out.println("I am about to update Jobs "+ JobName+" to "+FreeOrNot);
             }
             catch (SQLException e) {
                 e.printStackTrace();

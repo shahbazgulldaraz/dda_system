@@ -68,7 +68,7 @@ public class Main {
         //send curl request calling curl here
 
         CurlRequest curlRequest = new CurlRequest();
-//        System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ buyerEmailString +" <::> "+ buyerPasswordString +" <::> "+ventureNameString);
+        System.out.println("Sending curl request to the device: " + deviceUdidString +" <::> "+ buyerEmailString +" <::> "+ventureNameString);
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString,ventureNameString);
 //        base.updateJobIsFreeOrOccupied(jobName, curlRequest.isJobInQueue(jobName,curlRequest.sendCurlGetRequest(curlRequest.jenkins_queue_url, curlRequest.username, curlRequest.password)));
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
