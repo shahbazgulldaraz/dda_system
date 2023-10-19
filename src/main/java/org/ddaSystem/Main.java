@@ -46,12 +46,28 @@ public class Main {
                 throw new RuntimeException(e);
             }
         }));
-        Collections.reverse(jobs_names_list);
-        for (int i = 0; i < maxLoopCount; i++) {
+
+      Collections.reverse(jobs_names_list);
+
+// Create a map to store job allocations
+        Map<String, Integer> jobNameListCountMap = new HashMap<>();
+
+        int maxAllocations = ventureList.size() * 3;
+
+        while (jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < maxAllocations) {
             for (int j = 0; j < ventureList.size(); j++) {
-                Buyer buyerInfo = base.findAvailableBuyer(ventureList.get(j));
-                allocateJobs(jobs_names_list.get(j), ventureList.get(j), buyerInfo);
+                String jobName = jobs_names_list.get(j);
+
+                // Check if the job has been allocated less than 2 times
+                if (jobNameListCountMap.getOrDefault(jobName, 0) < 2) {
+                    Buyer buyerInfo = base.findAvailableBuyer(ventureList.get(j));
+                    allocateJobs(jobName, ventureList.get(j), buyerInfo);
+
+                    // Increment the count for the job
+                    jobNameListCountMap.put(jobName, jobNameListCountMap.getOrDefault(jobName, 0) + 1);
+                }
             }
+            System.out.println("Map of job names and their count: " + jobNameListCountMap);
             Collections.shuffle(jobs_names_list);
         }
     }
