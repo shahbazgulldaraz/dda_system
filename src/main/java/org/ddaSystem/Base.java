@@ -182,7 +182,7 @@ public class Base {
                     String[] queries = {
                     "PRAGMA foreign_keys=off;",
                     "DELETE FROM Execution;",
-//                    "DELETE FROM Jenkins_jobs;",
+                    "DELETE FROM Jenkins_jobs;",
                     "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
                     "UPDATE Jenkins_jobs SET Job_In_Queue = 0;",
                     "UPDATE Buyers SET Buyer_Free =1;",
