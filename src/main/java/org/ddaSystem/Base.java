@@ -1,21 +1,14 @@
 package org.ddaSystem;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
 
-import javax.print.attribute.standard.JobName;
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -133,7 +126,7 @@ public class Base {
     }
 
 
-    public void insertExecutionRecord(Venture venture, String device, int deviceOSVersion, Buyer buyer, java.sql.Timestamp startTime) throws SQLException {
+    public void insertExecutionRecord_DB(Venture venture, String device, int deviceOSVersion, String buyer, java.sql.Timestamp startTime) throws SQLException {
         String insertQuery = "INSERT INTO Execution (Execution_venture, Execution_Device, Execution_Device_OS_Version, Execution_Buyer,Execution_Buyer_Password, Execution_Date) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -144,8 +137,8 @@ public class Base {
             preparedStatement.setString(1, venture.getName());
             preparedStatement.setString(2, device);
             preparedStatement.setInt(3, deviceOSVersion);
-            preparedStatement.setString(4, buyer.getEmail());
-            preparedStatement.setString(5, buyer.getPassword());
+            preparedStatement.setString(4, buyer);
+            preparedStatement.setString(5, "123456");
 
             // Format the timestamp to the desired format "yyyy-MM-dd HH:mm:ss"
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -158,11 +151,11 @@ public class Base {
 
 //            System.out.println("Execution record inserted successfully.");
         }
-        updateJobIsFreeOrOccupied(device,false);
-        updateBuyerIsFreeOrOccopied(buyer.getEmail(),false);
+        updateJobIsFreeOrOccupied_DB(device,false);
+        updateBuyerIsFreeOrOccopied_DB(buyer,false);
     }
 
-    private void updateBuyerIsFreeOrOccopied(String email, boolean b) {
+    private void updateBuyerIsFreeOrOccopied_DB(String email, boolean b) {
         String updateQuery = "UPDATE Buyers SET Buyer_Free = ? WHERE Buyer_Email = ?";
 
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
@@ -182,15 +175,16 @@ public class Base {
         }
     }
 
-    public void cleanUpDataBase() {
+    public void cleanUpDataBase_DB() {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL);
              Statement statement = connection.createStatement()) {
 
                     String[] queries = {
                     "PRAGMA foreign_keys=off;",
                     "DELETE FROM Execution;",
-                    "DELETE FROM Jenkins_jobs;",
+//                    "DELETE FROM Jenkins_jobs;",
                     "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
+                    "UPDATE Jenkins_jobs SET Job_In_Queue = 0;",
                     "UPDATE Buyers SET Buyer_Free =1;",
                     "PRAGMA foreign_keys=on;"
             };
@@ -207,24 +201,7 @@ public class Base {
     }
 
 
-    //this method will update the Device_Free column in Device table.
-    public void updateDeviceIsFreeOrOccupied(String deviceUdid,String FreeOrNot) throws SQLException {
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
-            String updateQuery = "UPDATE Devices SET Device_Free = ? WHERE Device_UDID = ?";
-            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
-                updateStatement.setString(1, FreeOrNot);
-                updateStatement.setString(2, deviceUdid);
-                updateStatement.executeUpdate();
-            }
-            catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-
-    public void updateJobIsFreeOrOccupied(String JobName,Boolean FreeOrNot) throws SQLException {
+    public void updateJobIsFreeOrOccupied_DB(String JobName, Boolean FreeOrNot) throws SQLException {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
             String updateQuery = "UPDATE Jenkins_jobs SET Device_Is_Free = ? WHERE Job_Name = ?";
             try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
@@ -238,7 +215,7 @@ public class Base {
         }
     }
 
-    public String constructURL(String Path) {
+    public String constructJenkinsURL(String Path) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains("linux")|| osName.contains("Ubuntu")) {
             // If the operating system is Linux
@@ -313,7 +290,27 @@ public class Base {
     }
 
 
-    public Buyer findAvailableBuyer(Venture venture) {
+    public Set<String> getBuyerSet() throws SQLException {
+        Set<String> emailVentureSet = new HashSet<>();
+
+        String query = "SELECT Buyer_Email, Buyer_Venture FROM Buyers";
+
+        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String email = resultSet.getString("Buyer_Email");
+                String venture = resultSet.getString("Buyer_Venture");
+                emailVentureSet.add(email + " - " + venture);
+            }
+        }
+
+        return emailVentureSet;
+    }
+
+
+    public Buyer findAvailableBuyer_DB(Venture venture) {
         Buyer buyer = null;
         String query = "SELECT * FROM Buyers WHERE Buyer_Free = ? AND Buyer_Venture = ? ORDER BY RANDOM() LIMIT 1";
 
@@ -339,34 +336,12 @@ public class Base {
         return buyer;
     }
 
-
-//    public boolean isDeviceAvailable(String device) throws SQLException {
-//        String checkQuery = "SELECT CurrentState FROM Devices WHERE DeviceName = ?";
-//
-//        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-//             PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
-//
-//            checkStatement.setString(1, device);
-//
-//            try (ResultSet resultSet = checkStatement.executeQuery()) {
-//                if (resultSet.next()) {
-//                    String currentState = resultSet.getString("CurrentState");
-//                    if (currentState.equals("Vacant")) {
-//                        return true;
-//                    }
-//                }
-//            }
-//        }
-//
-//        return false;
-//    }
-
     //write a method which takes string "JobsName",and store it in the "Device_Name" column then it will break the string into two strings,
     // the string before "_os_" will be the Device_Name and the string after "_os_" is the Os_version and will be stored as OS_Version
     // if the "jobName" dont have "_os_" then store the whole string in the Device_Name column, in Jenkins_Jobs table.
     // This method will return the list of devices from  Jenkins_Jobs table in descending order.
 
-    public void storeJobDetailsInDB(String jobName, boolean inProgress, Boolean job_in_queue) {
+    public void storeJobDetailsIn_DB(String jobName, boolean inProgress, Boolean job_in_queue) {
         String deviceName;
         String osVersion;
 
@@ -383,11 +358,11 @@ public class Base {
             return;
         }
 
-        insertJobNameAndOSInDB(jobName, deviceName, osVersion, inProgress, job_in_queue);
+        insertJobNameAndOSIn_DB(jobName, deviceName, osVersion, inProgress, job_in_queue);
     }
 
 
-    private void insertJobNameAndOSInDB(String jobName, String deviceName, String osVersion, boolean inProgress, boolean job_in_queue) {
+    private void insertJobNameAndOSIn_DB(String jobName, String deviceName, String osVersion, boolean inProgress, boolean job_in_queue) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
             String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
             try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
@@ -425,7 +400,7 @@ public class Base {
 
 
     //get Job details from Jenkins_Jobs table in descending order of Device_Os_Version
-    public List<String> getJobDetailsSortedByOSVersion() throws SQLException {
+    public List<String> getJobDetailsSortedByOSVersion_DB() throws SQLException {
         List<String> jobDetails = new ArrayList<>();
         String selectQuery = "SELECT Job_Name FROM Jenkins_jobs WHERE Job_In_Queue = 0 ORDER BY Device_Os_Version DESC";
 
@@ -439,26 +414,6 @@ public class Base {
             }
         }
         return jobDetails;
-    }
-
-
-
-    public void DeviceStatusScheduler(String deviceUdids, String Status) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                updateDeviceIsFreeOrOccupied(deviceUdids,Status);
-                if(Status.equals("1")){
-                    System.out.println(deviceUdids+"<<:::Device is FreeNow by scheduler");
-                }else {
-                    System.out.println(deviceUdids+"<<:::Device is Occupied by scheduler");
-                }
-
-            } catch (SQLException e) {
-                e.printStackTrace(); // Handle the exception as per your application's needs
-            }
-        }, 0, 10, TimeUnit.SECONDS);
     }
 
 
@@ -486,36 +441,6 @@ public class Base {
     }
 
 
-    // Method to write a JSONObject to a file in a specified file path
-    public void writeJsonToFile(JSONObject json, String filePath) throws IOException {
-        try (FileWriter fileWriter = new FileWriter(filePath)) {
-            fileWriter.write(json.toString(4));  // Write JSON with 4-space indentation
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-
-    public List<String> getAvailableDeviceUDIDsSortedByOSVersion() throws SQLException {
-        List<String> availableDeviceUDIDs = new ArrayList<>();
-        String selectQuery = "SELECT Device_UDID FROM Devices " +
-                "WHERE Device_Status = 1 AND Device_Free = 1 " +
-                "ORDER BY Device_OS_Version DESC";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-             ResultSet resultSet = selectStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                String deviceUDID = resultSet.getString("Device_UDID");
-                availableDeviceUDIDs.add(deviceUDID);
-            }
-        }
-
-        return availableDeviceUDIDs;
-    }
-
     public String getDeviceOSVersion(String deviceUDID) throws SQLException {
         String osVersion = null;
         String selectQuery = "SELECT Device_OS_Version FROM Devices " +
@@ -536,7 +461,7 @@ public class Base {
         return osVersion;
     }
 
-    public String getJobOSVersion(String JobName) throws SQLException {
+    public String getJobOSVersion_DB(String JobName) throws SQLException {
         String osVersion = null;
         String selectQuery = "SELECT Device_Os_Version FROM Jenkins_jobs " +
                 "WHERE Job_Name = ?";
@@ -556,40 +481,7 @@ public class Base {
         return osVersion;
     }
 
-    public String findAvailableDeviceWithDifferentOS(List<String> availableDeviceUDIDs, Set<String> executedVenturesWithOS) throws SQLException {
-        for (String device : availableDeviceUDIDs) {
-            String osVersion = getDeviceOSVersion(device);
-            if (!executedVenturesWithOS.contains(osVersion)) {
-                return device;
-            }
-        }
-        return null;
-    }
-
-    public boolean hasVentureBeenExecutedToday(String ventureName) {
-        boolean executedToday = false;
-        String selectQuery = "SELECT COUNT(*) FROM Execution " +
-                "WHERE Execution_venture = ? AND DATE(Execution_Date) = DATE('now', 'localtime')";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
-
-            selectStatement.setString(1, ventureName);
-
-            try (ResultSet resultSet = selectStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    int count = resultSet.getInt(1);
-                    executedToday = count > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return executedToday;
-    }
-
-    public List<Venture> getVenturesWithPriorities() throws SQLException {
+    public List<Venture> getVenturesWithPriorities_DB() throws SQLException {
         List<Venture> ventures = new ArrayList<>();
         String selectQuery = "SELECT Venture_Name, Venture_Priority FROM Ventures " +
                 "ORDER BY Venture_Priority ASC";
@@ -611,97 +503,4 @@ public class Base {
 //        System.out.println("\n\n\nVentures with priorities are: " + ventures + "\n\n\n");
         return ventures;
     }
-
-    public String checkCurrentState(List<String> devices) throws IOException, InterruptedException {
-        String status = "";
-        for (String device : devices) {
-            Process process = Runtime.getRuntime().exec("adb -s " + device + " shell dumpsys window | grep \"mCurrentFocus\"");
-            process.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                status = line;
-            }
-        }
-        if(status.contains("com.daraz.android")){
-            status = "Occupied";
-        }else {
-            status = "Vacant";
-        }
-        return status;
-    }
-
-    public boolean checkDeviceIsFree(String device) throws IOException, InterruptedException {
-        String status = "";
-        Process process = Runtime.getRuntime().exec("adb -s " + device + " shell dumpsys window | grep \"mCurrentFocus\"");
-        process.waitFor();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            status = line;
-        }
-        if(status.contains("com.daraz.android")){
-            return false;
-        }else {
-            return true;
-        }
-    }
-
-    public List<String> getAvailableDeviceUDIDs() throws SQLException {
-        List<String> availableDeviceUDIDs = new ArrayList<>();
-        String selectQuery = "SELECT Device_UDID FROM Devices WHERE Device_Status = 1 AND Device_Free = 1";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-             ResultSet resultSet = selectStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                String deviceUDID = resultSet.getString("Device_UDID");
-                availableDeviceUDIDs.add(deviceUDID);
-            }
-        }
-
-        return availableDeviceUDIDs;
-    }
-
-    public boolean isDeviceAvailable(String device) throws SQLException {
-        String selectQuery = "SELECT Device_Status FROM Devices WHERE Device_UDID = ?";
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
-
-            selectStatement.setString(1, device);
-
-            try (ResultSet resultSet = selectStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    String deviceStatus = resultSet.getString("Device_Status");
-                    if (deviceStatus.equals("Vacant")) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-
-    private List<String> fetchRecords(String columnName, String tableName, String whereStatement) throws SQLException {
-        List<String> records = new ArrayList<>();
-
-        String query = "SELECT " + columnName + " FROM " + tableName + " WHERE " + whereStatement;
-
-        try (Connection connection = DriverManager.getConnection(DATABASE_URL);
-             PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                records.add(resultSet.getString(columnName));
-            }
-        }
-
-        return records;
-    }
-
-
 }
