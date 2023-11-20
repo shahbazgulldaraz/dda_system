@@ -14,17 +14,17 @@ public class Main {
 
 
     public static void main(String[] args) throws SQLException, IOException, InterruptedException {
-            Main app = new Main();
-            Base base = new Base();
-            base.cleanUpDataBase_DB();
-            CurlRequest curlRequest = new CurlRequest();
-             curlRequest.curlRequest();
-            app.scheduleJobs(base.getJobDetailsSortedByOSVersion_DB(), base.getVenturesWithPriorities_DB());
+        Main app = new Main();
+        Base base = new Base();
+        base.cleanUpDataBase_DB();
+        CurlRequest curlRequest = new CurlRequest();
+        curlRequest.curlRequest();
+        app.scheduleJobs(base.getJobDetailsSortedByOSVersion_DB(), base.getVenturesWithPriorities_DB());
     }
 
 
 
-//    This method orchestrates the allocation of jobs to ventures. Here's a breakdown of the comments:
+    //    This method orchestrates the allocation of jobs to ventures. Here's a breakdown of the comments:
 //
 //    Create copies of job names and ventures to avoid modifying the original lists.
 //    Determine how many times the allocation loop will run based on the number of job names.
@@ -76,8 +76,18 @@ public class Main {
         // Create a set to track allocated jobs for each venture
         Map<Venture, Set<String>> allocatedJobs = new HashMap<>();
 
-        // Calculate the maximum number of allocations allowed per venture
-        int maxEachVentureWillBeExecuted = totalAllocationsByJobs / ventureList.size();
+        // Calculate the maximum number of allocations allowed per venture,
+        // if the number is completely divisible by the number of ventures then proceed with the calculation
+        // else get the lower value divisible by the number of ventures
+
+        int maxEachVentureWillBeExecuted;
+        if (totalAllocationsByJobs % ventureList.size() == 0) {
+            maxEachVentureWillBeExecuted = totalAllocationsByJobs / ventureList.size();
+        } else {
+            // If not, get the lower value that is divisible by the number of ventures
+            maxEachVentureWillBeExecuted = (totalAllocationsByJobs / ventureList.size()) * ventureList.size();
+        }
+//        int maxEachVentureWillBeExecuted = totalAllocationsByJobs / ventureList.size();
         System.out.println("Max each venture will be executed: " + maxEachVentureWillBeExecuted);
 
         // Handle the case where either the venture list or job names list is empty
@@ -89,56 +99,48 @@ public class Main {
         // Create a map to track the number of allocations for each venture
         Map<Venture, Integer> ventureAllocationCount = new HashMap<>();
 
-        // Loop until the total number of allocations is reached
-        while (jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < totalAllocationsByJobs) {
-            // Iterate through the list of ventures
-            for (int j = 0; j < ventureList.size(); j++) {
-                Venture venture = ventureList.get(j);
+        try {
 
-                // Check if the venture has reached the maximum allocations
-                if (ventureAllocationCount.getOrDefault(venture, 0) >= maxEachVentureWillBeExecuted) {
-                    continue; // Skip this venture
-                }
+            for (; jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < totalAllocationsByJobs; Collections.shuffle(jobs_names_list)) {
+                // Iterate through the list of ventures
+                for (int j = 0; j < ventureList.size(); j++) {
+                    Venture venture = ventureList.get(j);
 
-                String jobName = jobs_names_list.get(j);
+                    // Check if the venture has reached the maximum allocations
+                    if (ventureAllocationCount.getOrDefault(venture, 0) >= maxEachVentureWillBeExecuted) {
+                        continue; // Skip this venture
+                    }
 
-                // Check if the job has been allocated less than 2 times and is not already allocated to this venture
-                if (jobNameListCountMap.getOrDefault(jobName, 0) < 2 &&
-                        !allocatedJobs.getOrDefault(venture, Collections.emptySet()).contains(jobName)) {
+                    String jobName = jobs_names_list.get(j);
 
-                    // Find an available buyer for this venture
-                    Buyer buyerInfo = base.findAvailableBuyer_DB(venture);
+                    // Check if the job has been allocated less than 2 times and is not already allocated to this venture
+                    if (jobNameListCountMap.getOrDefault(jobName, 0) < 2 &&
+                            !allocatedJobs.getOrDefault(venture, Collections.emptySet()).contains(jobName)) {
 
-                    // Allocate the job to the venture
-                    allocateJobs(jobName, venture, buyerInfo);
+                        // Find an available buyer for this venture
+                        Buyer buyerInfo = base.findAvailableBuyer_DB(venture);
 
-                    // Increment the count for the job and venture
-                    jobNameListCountMap.put(jobName, jobNameListCountMap.getOrDefault(jobName, 0) + 1);
-                    ventureAllocationCount.put(venture, ventureAllocationCount.getOrDefault(venture, 0) + 1);
+                        // Allocate the job to the venture
+                        allocateJobs(jobName, venture, buyerInfo);
 
-                    // Add the allocated job to the set for the venture
-                    allocatedJobs.computeIfAbsent(venture, k -> new HashSet<>()).add(jobName);
+                        // Increment the count for the job and venture
+                        jobNameListCountMap.put(jobName, jobNameListCountMap.getOrDefault(jobName, 0) + 1);
+                        ventureAllocationCount.put(venture, ventureAllocationCount.getOrDefault(venture, 0) + 1);
+
+                        // Add the allocated job to the set for the venture
+                        allocatedJobs.computeIfAbsent(venture, k -> new HashSet<>()).add(jobName);
+
+                    }
                 }
             }
-            // Shuffle the job names list to change the allocation order
-            Collections.shuffle(jobs_names_list);
+        } catch (Exception e) {
+            System.out.println("Exception occurred while allocating jobs to ventures.");
         }
+
     }
 
 
 
-
-//    This method performs the following steps:
-//    Extracts information from the provided objects (job name, venture name, buyer info).
-//    Retrieves the current timestamp as the execution start date.
-//    Obtains the job's OS version.
-//    Attempts to insert an execution record for the job and venture, handling any exceptions.
-//    Creates a CurlRequest object for sending a request to a device.
-//    Prints a message indicating the curl request being sent.
-//    Sends a curl post request with device UDID, buyer email, buyer password, and venture name.
-//    Generates a random sleep time between 5 and 10 seconds.
-//    Prints the sleep time in seconds.
-//    Sleeps for the calculated time to simulate a job execution.
 
     private void allocateJobs(String jobName, Venture ventureName, Buyer buyerInfo) throws SQLException, InterruptedException, IOException {
         // Extract venture name, device UDID, buyer email, and buyer password from the provided objects
@@ -153,6 +155,9 @@ public class Main {
         // Get the job OS version
         int jobOSVersion = Integer.parseInt(base.getJobOSVersion_DB(jobName));
 
+        System.out.println("This is what i want to insert in the database, job name: " + jobName + " venture name: "
+                + ventureName.getName() + " buyer email: " + buyerEmailString + " execution start date: "
+                + executionStartDate + " job OS version: " + jobOSVersion);
         try {
             // Insert an execution record for the job and venture
             base.insertExecutionRecord_DB(ventureName, jobName, jobOSVersion, buyerEmailString, executionStartDate);
@@ -161,11 +166,11 @@ public class Main {
             System.out.println("Exception occurred while inserting execution record for job: " + jobName + " to venture: " + ventureName.getName());
         }
 
-        // Create a CurlRequest object to send a request to the device
+//         Create a CurlRequest object to send a request to the device
         CurlRequest curlRequest = new CurlRequest();
 
         // Print a message indicating the curl request being sent
-        System.out.println("Sending curl request to the device: " + deviceUdidString + " <::> " + jobOSVersion + " <::> " + buyerEmailString + " <::> " + ventureNameString);
+        System.out.println("Sending curl request to the device: " + jobName + " <::> " + jobOSVersion + " <::> " + buyerEmailString + " <::> " + ventureNameString+"\n\n\n");
 
         // Send a curl post request with device UDID, buyer email, buyer password, and venture name
         curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString, ventureNameString);
@@ -174,7 +179,7 @@ public class Main {
         int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
 
         // Print the sleep time in seconds
-        System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.");
+        System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.\n\n\n");
 
         // Sleep for the calculated time to simulate a job execution
         Thread.sleep(sleepTime);

@@ -11,12 +11,20 @@ import java.util.*;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class Base {
     Random random = new Random();
+    private static final Logger logger = LoggerFactory.getLogger(Base.class);
 
 
     private final String DATABASE_URL = databaseURL();
+
+    // 95%
+    //2Days Regresssion.
+    //success stories in squads.
 
 
     public List<String> getConnectedDevices() throws IOException, InterruptedException {
