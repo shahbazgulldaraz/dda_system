@@ -151,7 +151,7 @@ public class CurlRequest {
                     // Print the URL of the last build
 //                System.out.println("This is the Last build URL: " + apiLastBuildUrl);
 
-                    if (!(lastBuildNumber == null)) {
+//                    if (!(lastBuildNumber == null)) {
                         // Send a CURL request to get information about the last build
                         jsonObject = new JSONObject(sendCurlGetRequest(apiLastBuildUrl, username, password));
 
@@ -186,9 +186,9 @@ public class CurlRequest {
                         System.out.println(base.getJobDetailsSortedByOSVersion_DB());
 
                         System.out.println("-------------------------------------");
-                    } else {
-
-                    }
+//                    } else {
+//                    //NEED TO IMPLMENT THE LOGIC FOR THE JOB WHICH IS NOT RUNNING
+//                    }
                 } catch (Exception e) {
                     // Handle any exceptions that may occur
                     e.printStackTrace();

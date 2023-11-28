@@ -56,6 +56,8 @@ public class Main {
 
         // Calculate the total number of job allocations
         int totalAllocationsByJobs = jobs_names_list.size() * maxLoopCount;
+        System.out.println("This is max loop Count: "+maxLoopCount);
+        System.out.println("This is total job names list size: "+jobs_names_list.size());
         System.out.println("Total Allocation are:" + totalAllocationsByJobs);
 
         // Sort job names by OS version in descending order

@@ -46,6 +46,17 @@ public class Base {
         if (devices.isEmpty()) {
             System.out.println("\n\n\nNo device connected to the system. Terminating the program.!!!!\n\n\n");
             System.exit(0);
+//            Collections.addAll(devices,"09058252AI002968","63dc6a69", "8949cd691120", "91814e2d", "93d2d9131220", "NQX4C20610001444", "R58M823M5EE", "R58T11APGBB", "R58T20HFT8D",
+//                    "R58T20N7MMR",
+//                    "R58T210SPJJ",
+//                    "R58W21AY5RV",
+//                    "R9HRA05SLXA",
+//                    "R9WM817AADJ",
+//                    "RF8T20D9PDP",
+//                    "ROOGADA921205024",
+//                    "ZL33C26BCD",
+//                    "ac25d4ff0410",
+//                    "ce11171b640a1e3404");
         } else {
             System.out.println("\n\nConnected devices are >> " + devices);
         }
