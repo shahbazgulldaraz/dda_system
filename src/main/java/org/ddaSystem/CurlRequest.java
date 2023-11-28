@@ -129,69 +129,70 @@ public class CurlRequest {
 
     public void getJobInfo(List<String> jobNames) {
         for (String jobName : jobNames) {
-            try {
-                System.out.println("-------------------------------------");
-                System.out.println("Job Name: " + jobName);
+            if (jobName.contains("_udid_")) {
+                try {
+                    System.out.println("-------------------------------------");
+                    System.out.println("Job Name: " + jobName);
 
-                // Construct the API URL for the Jenkins job
-                String apiUrl = job_url + jobName + jSon_path;
+                    // Construct the API URL for the Jenkins job
+                    String apiUrl = job_url + jobName + jSon_path;
 
-                // Send a CURL request to the Jenkins API and parse the response as a JSONObject
-                JSONObject jsonObject = new JSONObject(sendCurlGetRequest(apiUrl, username, password));
+                    // Send a CURL request to the Jenkins API and parse the response as a JSONObject
+                    JSONObject jsonObject = new JSONObject(sendCurlGetRequest(apiUrl, username, password));
 
-                // Retrieve the last build number of the job
-                String lastBuildNumber = jsonObject.getJSONObject("lastBuild").optString("number");
-                //Retrieve Next Build Number
-                String NextBuildNumber = jsonObject.optString("nextBuildNumber","Next Build Number Not Found");
+                    // Retrieve the last build number of the job
+                    String lastBuildNumber = jsonObject.getJSONObject("lastBuild").optString("number");
+                    //Retrieve Next Build Number
+                    String NextBuildNumber = jsonObject.optString("nextBuildNumber", "Next Build Number Not Found");
 
-                // Construct the API URL for the last build of the Jenkins job
-                String apiLastBuildUrl = job_url + jobName + "/" + lastBuildNumber + jSon_path;
+                    // Construct the API URL for the last build of the Jenkins job
+                    String apiLastBuildUrl = job_url + jobName + "/" + lastBuildNumber + jSon_path;
 
-                // Print the URL of the last build
+                    // Print the URL of the last build
 //                System.out.println("This is the Last build URL: " + apiLastBuildUrl);
 
-                if(!(lastBuildNumber ==null)) {
-                    // Send a CURL request to get information about the last build
-                    jsonObject = new JSONObject(sendCurlGetRequest(apiLastBuildUrl, username, password));
+                    if (!(lastBuildNumber == null)) {
+                        // Send a CURL request to get information about the last build
+                        jsonObject = new JSONObject(sendCurlGetRequest(apiLastBuildUrl, username, password));
 
 
-                    // Write the JSON response of the last build to a file
+                        // Write the JSON response of the last build to a file
 //                writeJsonToFile(jsonObject, jobName + "_" + lastBuildNumber + ".json");
 
-                    // Retrieve build details
-                    String result = jsonObject.optString("result", "Result Not Found");
-                    boolean inProgress = jsonObject.optBoolean("inProgress");
-                    String TimeStamp = jsonObject.optString("timestamp", "Timestamp Not Found");
-                    String duration = jsonObject.optString("duration", "Duration Not Found");
-                    String estimatedDuration = jsonObject.optString("estimatedDuration", "Estimated Duration Not Found");
+                        // Retrieve build details
+                        String result = jsonObject.optString("result", "Result Not Found");
+                        boolean inProgress = jsonObject.optBoolean("inProgress");
+                        String TimeStamp = jsonObject.optString("timestamp", "Timestamp Not Found");
+                        String duration = jsonObject.optString("duration", "Duration Not Found");
+                        String estimatedDuration = jsonObject.optString("estimatedDuration", "Estimated Duration Not Found");
 //                String NextBuildNumber = jsonObject.optString("nextBuild", "Next Build Number Not Found");
 
-                    // Print the information about the last build
+                        // Print the information about the last build
 
-                    Base base = new Base();
-                    System.out.println("Last Build Number: " + lastBuildNumber);
-                    System.out.println("Build inProgress: " + inProgress);
-                    System.out.println("Build Status: " + result);
-                    System.out.println("Build TimeStamp: " + Base.convertToReadableDateAndTimeFormat(Long.parseLong(TimeStamp)));
-                    System.out.println("Build Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(duration)));
-                    System.out.println("Build Estimated Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(estimatedDuration)));
-                    System.out.println("Next Build Number: " + NextBuildNumber);
-                    Boolean job_in_queue = isJobInQueue(jobName, sendCurlGetRequest(jenkins_queue_url, username, password));
-                    System.out.println("Job in queue >>>>>>: " + job_in_queue);
-                    // if inProgress is true and job_in_queue is false then update the job status is free
-                    // if inProgress is false and job_in_queue is true then update the job status is false
-                    base.storeJobDetailsIn_DB(jobName, inProgress, job_in_queue);
-                    System.out.println("Job details stored in DB");
-                    System.out.println(base.getJobDetailsSortedByOSVersion_DB());
+                        Base base = new Base();
+                        System.out.println("Last Build Number: " + lastBuildNumber);
+                        System.out.println("Build inProgress: " + inProgress);
+                        System.out.println("Build Status: " + result);
+                        System.out.println("Build TimeStamp: " + Base.convertToReadableDateAndTimeFormat(Long.parseLong(TimeStamp)));
+                        System.out.println("Build Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(duration)));
+                        System.out.println("Build Estimated Duration: " + Base.convertToReadableTimeFormat(Long.parseLong(estimatedDuration)));
+                        System.out.println("Next Build Number: " + NextBuildNumber);
+                        Boolean job_in_queue = isJobInQueue(jobName, sendCurlGetRequest(jenkins_queue_url, username, password));
+                        System.out.println("Job in queue >>>>>>: " + job_in_queue);
+                        // if inProgress is true and job_in_queue is false then update the job status is free
+                        // if inProgress is false and job_in_queue is true then update the job status is false
+                        base.storeJobDetailsIn_DB(jobName, inProgress, job_in_queue);
+                        System.out.println("Job details stored in DB");
+                        System.out.println(base.getJobDetailsSortedByOSVersion_DB());
 
-                    System.out.println("-------------------------------------");
+                        System.out.println("-------------------------------------");
+                    } else {
+
+                    }
+                } catch (Exception e) {
+                    // Handle any exceptions that may occur
+                    e.printStackTrace();
                 }
-                else {
-
-                }
-            } catch (Exception e) {
-                // Handle any exceptions that may occur
-                e.printStackTrace();
             }
         }
     }

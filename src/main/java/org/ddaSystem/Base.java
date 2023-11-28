@@ -349,28 +349,37 @@ public class Base {
     // if the "jobName" dont have "_os_" then store the whole string in the Device_Name column, in Jenkins_Jobs table.
     // This method will return the list of devices from  Jenkins_Jobs table in descending order.
 
-    public void storeJobDetailsIn_DB(String jobName, boolean inProgress, Boolean job_in_queue) {
+    public void storeJobDetailsIn_DB(String jobName, boolean inProgress, Boolean job_in_queue) throws IOException, InterruptedException {
         String deviceName;
         String osVersion;
+        String deviceUdid;
 
-        if (jobName.matches("^(\\w+)_os_(\\d+)$")) {
-            Matcher matcher = Pattern.compile("^(\\w+)_os_(\\d+)$").matcher(jobName);
-            matcher.matches();
-            deviceName = matcher.group(1);
-            osVersion = matcher.group(2);
-        } else if (jobName.contains("Samsung_Galaxy_S8")) {
-            deviceName = jobName;
-            osVersion = "9";
-        } else {
-            System.out.println("These are the invalid Job Names:>"+jobName);
-            return;
-        }
+        System.out.println("I am here in storeJobDetailsIn_DB : >"+jobName+" "+inProgress+" "+job_in_queue);
+            // Use a more robust regular expression to match the jobName pattern
+            if (jobName.matches("^(\\w+)_os_(\\d+)_udid_(\\w+)$")) {
+                Matcher matcher = Pattern.compile("^(\\w+)_os_(\\d+)_udid_(\\w+)$").matcher(jobName);
 
-        insertJobNameAndOSIn_DB(jobName, deviceName, osVersion, inProgress, job_in_queue);
+                // Call matches() to ensure the pattern matches the input string
+                if (matcher.matches()) {
+                    deviceName = matcher.group(1);
+                    osVersion = matcher.group(2);
+                    deviceUdid = matcher.group(3);
+                    if(getConnectedDevices().contains(deviceUdid)) {
+                        System.out.println("\n\n\nThis Is the Data to insert " + jobName + " " + deviceName + " " + osVersion + " " + deviceUdid + " " + inProgress + " " + job_in_queue);
+                        insertJobNameAndOSIn_DB(jobName, deviceName,osVersion, deviceUdid, inProgress, job_in_queue);
+                    }
+                } else {
+                    System.out.println("These are the invalid Job Names:>" + jobName);
+                    return;
+                }
+            } else {
+                System.out.println("These are the invalid Job Names:>" + jobName);
+                return;
+            }
     }
 
 
-    private void insertJobNameAndOSIn_DB(String jobName, String deviceName, String osVersion, boolean inProgress, boolean job_in_queue) {
+    private void insertJobNameAndOSIn_DB(String jobName, String deviceName, String osVersion, String deviceUdid, boolean inProgress, boolean job_in_queue) {
         try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
             String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
             try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
@@ -379,24 +388,26 @@ public class Base {
 
                 if (resultSet.next()) {
                     // If the job already exists, update its columns
-                    String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
+                    String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Udid = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
                     try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
                         updateStatement.setString(1, deviceName);
-                        updateStatement.setInt(2, Integer.parseInt(osVersion));
-                        updateStatement.setBoolean(3, !inProgress);
-                        updateStatement.setBoolean(4, job_in_queue);
-                        updateStatement.setString(5, jobName);
+                        updateStatement.setString(2, deviceUdid);
+                        updateStatement.setInt(3, Integer.parseInt(osVersion));
+                        updateStatement.setBoolean(4, !inProgress);
+                        updateStatement.setBoolean(5, job_in_queue);
+                        updateStatement.setString(6, jobName);
                         updateStatement.executeUpdate();
                     }
                 } else {
                     // If the job doesn't exist, insert a new record
-                    String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?)";
+                    String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Udid, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?, ?)";
                     try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
                         insertStatement.setString(1, jobName);
                         insertStatement.setString(2, deviceName);
-                        insertStatement.setInt(3, Integer.parseInt(osVersion));
-                        insertStatement.setBoolean(4, !inProgress);
-                        insertStatement.setBoolean(5, job_in_queue);
+                        insertStatement.setString(3, deviceUdid);
+                        insertStatement.setInt(4, Integer.parseInt(osVersion));
+                        insertStatement.setBoolean(5, !inProgress);
+                        insertStatement.setBoolean(6, job_in_queue);
                         insertStatement.executeUpdate();
                     }
                 }
@@ -405,6 +416,46 @@ public class Base {
             e.printStackTrace(); // Handle the exception appropriately
         }
     }
+
+
+
+//    private void    insertJobNameAndOSIn_DB(String jobName, String deviceName, String osVersion, String deviceUdid, boolean inProgress, boolean job_in_queue) {
+//        try (Connection connection = DriverManager.getConnection(DATABASE_URL)) {
+//            String selectQuery = "SELECT * FROM Jenkins_jobs WHERE Job_Name = ?";
+//            try (PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
+//                selectStatement.setString(1, jobName);
+//                ResultSet resultSet = selectStatement.executeQuery();
+//
+//                if (resultSet.next()) {
+//                    // If the job already exists, update its columns
+//                    String updateQuery = "UPDATE Jenkins_jobs SET Device_Name_In_Job = ?, Device_Udid = ?, Device_Os_Version = ?, Device_Is_Free = ?, Job_In_Queue = ? WHERE Job_Name = ?";
+//                    try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+//                        updateStatement.setString(1, deviceName);
+//                        updateStatement.setString(2, deviceUdid);
+//                        updateStatement.setInt(3, Integer.parseInt(osVersion));
+//                        updateStatement.setBoolean(4, !inProgress);
+//                        updateStatement.setBoolean(5, job_in_queue);
+//                        updateStatement.setString(6, jobName);
+//                        updateStatement.executeUpdate();
+//                    }
+//                } else {
+//                    // If the job doesn't exist, insert a new record
+//                    String insertQuery = "INSERT INTO Jenkins_jobs (Job_Name, Device_Name_In_Job, Device_Udid, Device_Os_Version, Device_Is_Free, Job_In_Queue) VALUES (?, ?, ?, ?, ?)";
+//                    try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery)) {
+//                        insertStatement.setString(1, jobName);
+//                        insertStatement.setString(2, deviceName);
+//                        insertStatement.setString(3, deviceUdid);
+//                        insertStatement.setInt(4, Integer.parseInt(osVersion));
+//                        insertStatement.setBoolean(5, !inProgress);
+//                        insertStatement.setBoolean(6, job_in_queue);
+//                        insertStatement.executeUpdate();
+//                    }
+//                }
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace(); // Handle the exception appropriately
+//        }
+//    }
 
 
     //get Job details from Jenkins_Jobs table in descending order of Device_Os_Version
