@@ -90,7 +90,7 @@ public class CurlRequest {
         String data = "TAG_NAME=" +
                 "&EMAIL="+encodedEmail +
                 "&BRANCH=master" +
-                "&REGRESSION_TYPE=Smoke" +
+                "&REGRESSION_TYPE=Full" +
                 "&RERUN_FAILED_ONLY=NO" +
                 "&ENV="+env +
                 "&RERUN_FILE_PATH=/mnt/storage1/rerunfiles/daraz-android-jenkins/REPLACEME" +
