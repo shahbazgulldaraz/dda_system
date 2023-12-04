@@ -80,12 +80,12 @@ public class CurlRequest {
     }
 
 
-    public String sendCurlPostRequest(String Job_name, String buyer_username, String buyer_password, String env) throws IOException {
+    public void sendCurlPostRequest(String Job_name, String buyer_username, String buyer_password, String env) throws IOException {
 //         Define your data parameters to be sent to the API
         String data = "TAG_NAME=" +
                 "&EMAIL="+buyer_username +
                 "&BRANCH=master" +
-                "&REGRESSION_TYPE=Full" +
+                "&REGRESSION_TYPE=Smoke" +
                 "&RERUN_FAILED_ONLY=NO" +
                 "&ENV="+env +
                 "&RERUN_FILE_PATH=/mnt/storage1/rerunfiles/daraz-android-jenkins/REPLACEME" +
