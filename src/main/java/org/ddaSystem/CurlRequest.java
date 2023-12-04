@@ -123,8 +123,7 @@ public class CurlRequest {
         reader.close();
         connection.disconnect();
 
-        return response.toString();
-//        return null;
+//        return response.toString();
     }
 
     public void getJobInfo(List<String> jobNames) {
