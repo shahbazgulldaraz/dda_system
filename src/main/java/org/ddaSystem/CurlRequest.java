@@ -44,7 +44,7 @@ public class CurlRequest {
             JSONObject jobObject = new JSONObject(jsonResponse);
 
             // Print job status
-//            printJobStatus(jobObject);
+            printJobStatus(jobObject);
 
             // Get detailed information about each job
             System.out.println("This is the job names list: "+jobNames);
