@@ -3,6 +3,7 @@ package org.ddaSystem;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,10 @@ public class CurlRequest {
             JSONObject jobObject = new JSONObject(jsonResponse);
 
             // Print job status
-            printJobStatus(jobObject);
+//            printJobStatus(jobObject);
 
             // Get detailed information about each job
+            System.out.println("This is the job names list: "+jobNames);
             getJobInfo(jobNames);
         } catch (IOException e) {
             e.printStackTrace();
@@ -81,9 +83,12 @@ public class CurlRequest {
 
 
     public void sendCurlPostRequest(String Job_name, String buyer_username, String buyer_password, String env) throws IOException {
+        // Encode the email address
+        String encodedEmail = URLEncoder.encode(buyer_username, StandardCharsets.UTF_8.toString());
+
 //         Define your data parameters to be sent to the API
         String data = "TAG_NAME=" +
-                "&EMAIL="+buyer_username +
+                "&EMAIL="+encodedEmail +
                 "&BRANCH=master" +
                 "&REGRESSION_TYPE=Smoke" +
                 "&RERUN_FAILED_ONLY=NO" +
@@ -96,10 +101,6 @@ public class CurlRequest {
         // Set up the connection and set request headers
         URL apiUrl = new URL(job_url+Job_name+"/buildWithParameters");
         HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
-//        int responseCode = connection.getResponseCode();
-//        if (responseCode != HttpURLConnection.HTTP_OK) {
-//            logger.error("Failed to submit POST request. HTTP Status Code: {}", responseCode);
-//        }
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Authorization", "Basic " + base.getEncodedCredentials(username, password));
         connection.setDoOutput(true);
@@ -123,7 +124,6 @@ public class CurlRequest {
         reader.close();
         connection.disconnect();
 
-//        return response.toString();
     }
 
     public void getJobInfo(List<String> jobNames) {

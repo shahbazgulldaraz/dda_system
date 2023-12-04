@@ -170,8 +170,8 @@ public class Base {
 
 //            System.out.println("Execution record inserted successfully.");
         }
-        updateJobIsFreeOrOccupied_DB(device,false);
-        updateBuyerIsFreeOrOccopied_DB(buyer,false);
+//        updateJobIsFreeOrOccupied_DB(device,false);
+//        updateBuyerIsFreeOrOccopied_DB(buyer,false);
     }
 
     private void updateBuyerIsFreeOrOccopied_DB(String email, boolean b) {
@@ -202,8 +202,9 @@ public class Base {
                     "PRAGMA foreign_keys=off;",
                     "DELETE FROM Execution;",
                     "DELETE FROM Jenkins_jobs;",
-                    "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
-                    "UPDATE Jenkins_jobs SET Job_In_Queue = 0;",
+//                            No need of these two queries, because we are already deteting the execution and Jenkins_jobs table, when there are no records in the db what will it update.
+//                    "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
+//                    "UPDATE Jenkins_jobs SET Job_In_Queue = 0;",
                     "UPDATE Buyers SET Buyer_Free =1;",
                     "PRAGMA foreign_keys=on;"
             };
