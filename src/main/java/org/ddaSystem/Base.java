@@ -5,6 +5,7 @@ import org.sqlite.SQLiteConfig;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -13,56 +14,98 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.commons.lang3.SystemUtils;
 
 public class Base {
     Random random = new Random();
-    private static final Logger logger = LoggerFactory.getLogger(Base.class);
-
-
     private final String DATABASE_URL = databaseURL();
 
     // 95%
     //2Days Regresssion.
     //success stories in squads.
 
-
     public List<String> getConnectedDevices() throws IOException, InterruptedException {
-//        System.out.println("\n\n\nGetting connected devices...\n\n\n");
         List<String> devices = new ArrayList<>();
-        Process process = Runtime.getRuntime().exec("adb devices");
-        process.waitFor();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        Pattern pattern = Pattern.compile("^(\\S+)\\s+device$"); // match the first non-whitespace characters
-        while ((line = reader.readLine()) != null) {
-            if (line.endsWith("device")) {
-                Matcher matcher = pattern.matcher(line);
-                if (matcher.matches()) {
-                    devices.add(matcher.group(1));
-                }
+        Process process = null;
+
+        try {
+            String command;
+
+            if (SystemUtils.IS_OS_MAC) {
+                System.out.println("\n\n\nGetting connected devices via SSH...\n\n\n");
+                // SSH into the Ubuntu machine and run adb devices
+                command = "ssh qaautomation@30.216.6.58 adb devices";
+            } else {
+                // Run ADB command directly on Mac
+                System.out.println("\n\n\nGetting connected devices...\n\n\n");
+                command = "adb devices";
+            }
+
+            // Execute the command
+            process = Runtime.getRuntime().exec(command);
+
+            // Capture the output of the command
+            String output = captureOutput(process);
+
+            // Process the output of adb devices and get the list of devices
+            devices = processDevicesOutput(output);
+
+        } finally {
+            if (process != null) {
+                process.waitFor(); // Wait for the process to finish
             }
         }
-        if (devices.isEmpty()) {
-            System.out.println("\n\n\nNo device connected to the system. Terminating the program.!!!!\n\n\n");
-            System.exit(0);
-//            Collections.addAll(devices,"09058252AI002968","63dc6a69", "8949cd691120", "91814e2d", "93d2d9131220", "NQX4C20610001444", "R58M823M5EE", "R58T11APGBB", "R58T20HFT8D",
-//                    "R58T20N7MMR",
-//                    "R58T210SPJJ",
-//                    "R58W21AY5RV",
-//                    "R9HRA05SLXA",
-//                    "R9WM817AADJ",
-//                    "RF8T20D9PDP",
-//                    "ROOGADA921205024",
-//                    "ZL33C26BCD",
-//                    "ac25d4ff0410",
-//                    "ce11171b640a1e3404");
-        } else {
-            System.out.println("\n\nConnected devices are >> " + devices);
-        }
+
+        handleDeviceResults(devices);
         return devices;
     }
 
+    private String captureOutput(Process process) throws IOException {
+        StringBuilder outputBuilder = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+//                System.out.println("And this is LINE::>" + line);
+                outputBuilder.append(line).append("\n");
+//                System.out.println("this is the OutPutLine:::>" + outputBuilder);
+            }
+        }
+
+        // Output for debugging purposes
+//        System.out.println("Command output:\n" + outputBuilder.toString());
+
+        return outputBuilder.toString();
+    }
+
+    private List<String> processDevicesOutput(String output) throws IOException {
+        List<String> devices = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
+            String line;
+            Pattern pattern = Pattern.compile("^(\\S+)\\s+device$");
+
+            while ((line = reader.readLine()) != null) {
+                if (line.endsWith("device")) {
+                    Matcher matcher = pattern.matcher(line);
+                    if (matcher.matches()) {
+                        devices.add(matcher.group(1));
+                    }
+                }
+            }
+        }
+
+        return devices;
+    }
+
+    private void handleDeviceResults(List<String> devices) {
+        if (devices.isEmpty()) {
+            System.out.println("\n\nNo devices connected. Please connect a device and try again.\n\n");
+            System.exit(0);
+        } else {
+            System.out.println("\n\nConnected devices are >> " + devices);
+        }
+    }
     public String executeAdbCommand(String device, String command) throws IOException, InterruptedException {
         String status = "";
         System.out.println("\n\n\nExecuting command >> " + command + "\n\n\n");
@@ -202,7 +245,7 @@ public class Base {
                     "PRAGMA foreign_keys=off;",
                     "DELETE FROM Execution;",
                     "DELETE FROM Jenkins_jobs;",
-//                            No need of these two queries, because we are already deteting the execution and Jenkins_jobs table, when there are no records in the db what will it update.
+//                    No need of these two queries, because we are already deteting the execution and Jenkins_jobs table, when there are no records in the db what will it update.
 //                    "UPDATE Jenkins_jobs SET Device_Is_Free = 1;",
 //                    "UPDATE Jenkins_jobs SET Job_In_Queue = 0;",
                     "UPDATE Buyers SET Buyer_Free =1;",
@@ -361,7 +404,7 @@ public class Base {
     // if the "jobName" dont have "_os_" then store the whole string in the Device_Name column, in Jenkins_Jobs table.
     // This method will return the list of devices from  Jenkins_Jobs table in descending order.
 
-    public void storeJobDetailsIn_DB(String jobName, boolean inProgress, Boolean job_in_queue) throws IOException, InterruptedException {
+    public void     storeJobDetailsIn_DB(String jobName, boolean inProgress, Boolean job_in_queue, List<String> devices) throws IOException, InterruptedException {
         String deviceName;
         String osVersion;
         String deviceUdid;
@@ -376,7 +419,7 @@ public class Base {
                     deviceName = matcher.group(1);
                     osVersion = matcher.group(2);
                     deviceUdid = matcher.group(3);
-                    if(getConnectedDevices().contains(deviceUdid)) {
+                    if(devices.contains(deviceUdid)) {
                         System.out.println("\n\n\nThis Is the Data to insert " + jobName + " " + deviceName + " " + osVersion + " " + deviceUdid + " " + inProgress + " " + job_in_queue);
                         insertJobNameAndOSIn_DB(jobName, deviceName,osVersion, deviceUdid, inProgress, job_in_queue);
                     }

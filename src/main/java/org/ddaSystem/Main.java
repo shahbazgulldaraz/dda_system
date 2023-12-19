@@ -1,5 +1,7 @@
 package org.ddaSystem;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -53,10 +55,12 @@ public class Main {
 
         // Determine how many times the allocation loop should run based on the number of job names
         int maxLoopCount = jobs_names_list.size() >= 8 ? 2 : 1;
+//        int maxLoopCount = 5;
 
         // Calculate the total number of job allocations
         int totalAllocationsByJobs = jobs_names_list.size() * maxLoopCount;
-        System.out.println("This is max loop Count: "+maxLoopCount);
+        System.out.println("This is Max loop count: "+maxLoopCount);
+        System.out.println("This is jobs names list: "+jobs_names_list.size());
         System.out.println("This is total job names list size: "+jobs_names_list.size());
         System.out.println("Total Allocation are:" + totalAllocationsByJobs);
 
@@ -85,12 +89,13 @@ public class Main {
         int maxEachVentureWillBeExecuted;
         if (totalAllocationsByJobs % ventureList.size() == 0) {
             maxEachVentureWillBeExecuted = totalAllocationsByJobs / ventureList.size();
+            System.out.println("Max totalAllocationsByJobs % ventureList.size(): " + maxEachVentureWillBeExecuted);
         } else {
             // If not, get the lower value that is divisible by the number of ventures
             maxEachVentureWillBeExecuted = (totalAllocationsByJobs / ventureList.size()) * ventureList.size();
+            System.out.println("Max each venture will be executed: " + maxEachVentureWillBeExecuted);
         }
 //        int maxEachVentureWillBeExecuted = totalAllocationsByJobs / ventureList.size();
-        System.out.println("Max each venture will be executed: " + maxEachVentureWillBeExecuted);
 
         // Handle the case where either the venture list or job names list is empty
         if (ventureList.isEmpty() || jobs_names_list.isEmpty()) {
@@ -102,8 +107,12 @@ public class Main {
         Map<Venture, Integer> ventureAllocationCount = new HashMap<>();
 
         try {
+//            System.out.println("This is the total number of allocations: " + totalAllocationsByJobs);
+//            System.out.println("This is the total allocations by jobs: " + jobNameListCountMap);
+            // Shuffle the job names list before entering the outer loop
+            Collections.shuffle(jobs_names_list);
 
-            for (; jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < totalAllocationsByJobs; Collections.shuffle(jobs_names_list)) {
+            for (; jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < 10; Collections.shuffle(jobs_names_list)) {
                 // Iterate through the list of ventures
                 for (int j = 0; j < ventureList.size(); j++) {
                     Venture venture = ventureList.get(j);
@@ -115,6 +124,7 @@ public class Main {
 
                     String jobName = jobs_names_list.get(j);
 
+                    System.out.println("This is the total number of jobNameListCountMap: " + jobNameListCountMap);
                     // Check if the job has been allocated less than 2 times and is not already allocated to this venture
                     if (jobNameListCountMap.getOrDefault(jobName, 0) < 2 &&
                             !allocatedJobs.getOrDefault(venture, Collections.emptySet()).contains(jobName)) {
@@ -131,7 +141,6 @@ public class Main {
 
                         // Add the allocated job to the set for the venture
                         allocatedJobs.computeIfAbsent(venture, k -> new HashSet<>()).add(jobName);
-
                     }
                 }
             }
@@ -169,22 +178,37 @@ public class Main {
         }
 
 //         Create a CurlRequest object to send a request to the device
-        CurlRequest curlRequest = new CurlRequest();
 
         // Print a message indicating the curl request being sent
         System.out.println("Sending curl request to the device: " + jobName + " <::> " + jobOSVersion + " <::> " + buyerEmailString + " <::> " + ventureNameString+"\n\n\n");
 
         // Send a curl post request with device UDID, buyer email, buyer password, and venture name
-        curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString, ventureNameString);
+        //if Mac then do not execute the curl request and if ubuntu then execute the curl request.
+        if(SystemUtils.IS_OS_MAC) {
+            System.out.println("This is mac os, so not executing the curl request");
+//            CurlRequest curlRequest = new CurlRequest();
+//            curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString, ventureNameString);
+            // Generate a random sleep time between 5000 and 10000 milliseconds (5 to 10 seconds)
+//            int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
 
-        // Generate a random sleep time between 5000 and 10000 milliseconds (5 to 10 seconds)
-        int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
+            // Print the sleep time in seconds
+//            System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.\n\n\n");
 
-        // Print the sleep time in seconds
-        System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.\n\n\n");
+            // Sleep for the calculated time to simulate a job execution
+//            Thread.sleep(sleepTime);
+        }else {
+        CurlRequest curlRequest = new CurlRequest();
+            curlRequest.sendCurlPostRequest(deviceUdidString, buyerEmailString, buyerPasswordString, ventureNameString);
+            // Generate a random sleep time between 5000 and 10000 milliseconds (5 to 10 seconds)
+            int sleepTime = random.nextInt((10000 - 5000) + 1) + 5000;
 
-        // Sleep for the calculated time to simulate a job execution
-        Thread.sleep(sleepTime);
+            // Print the sleep time in seconds
+            System.out.println("\n\nSleeping for " + (sleepTime / 1000) + " seconds.\n\n\n");
+
+            // Sleep for the calculated time to simulate a job execution
+            Thread.sleep(sleepTime);
+        }
+
     }
 
     // Create a method which will fetch the current status from each Job, is the execution on going or not.

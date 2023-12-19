@@ -49,7 +49,7 @@ public class CurlRequest {
             // Get detailed information about each job
             System.out.println("This is the job names list: "+jobNames);
             getJobInfo(jobNames);
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -126,7 +126,8 @@ public class CurlRequest {
 
     }
 
-    public void getJobInfo(List<String> jobNames) {
+    public void getJobInfo(List<String> jobNames) throws IOException, InterruptedException {
+        List<String> devices = base.getConnectedDevices();
         for (String jobName : jobNames) {
             if (jobName.contains("_udid_")) {
                 try {
@@ -180,7 +181,7 @@ public class CurlRequest {
                         System.out.println("Job in queue >>>>>>: " + job_in_queue);
                         // if inProgress is true and job_in_queue is false then update the job status is free
                         // if inProgress is false and job_in_queue is true then update the job status is false
-                        base.storeJobDetailsIn_DB(jobName, inProgress, job_in_queue);
+                        base.storeJobDetailsIn_DB(jobName, inProgress, job_in_queue,devices);
                         System.out.println("Job details stored in DB");
                         System.out.println(base.getJobDetailsSortedByOSVersion_DB());
 
