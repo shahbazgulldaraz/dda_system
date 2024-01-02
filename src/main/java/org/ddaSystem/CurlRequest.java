@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -47,7 +48,7 @@ public class CurlRequest {
             printJobStatus(jobObject);
 
             // Get detailed information about each job
-            System.out.println("This is the job names list: "+jobNames);
+            if (SystemUtils.IS_OS_MAC)   System.out.println("This is the job names list: "+jobNames);
             getJobInfo(jobNames);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();

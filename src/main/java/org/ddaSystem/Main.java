@@ -59,11 +59,12 @@ public class Main {
 
         // Calculate the total number of job allocations
         int totalAllocationsByJobs = jobs_names_list.size() * maxLoopCount;
-        System.out.println("This is Max loop count: "+maxLoopCount);
-        System.out.println("This is jobs names list: "+jobs_names_list.size());
-        System.out.println("This is total job names list size: "+jobs_names_list.size());
-        System.out.println("Total Allocation are:" + totalAllocationsByJobs);
-
+        if (SystemUtils.IS_OS_MAC) {
+            System.out.println("This is Max loop count: " + maxLoopCount);
+            System.out.println("This is jobs names list: " + jobs_names_list.size());
+            System.out.println("This is total job names list size: " + jobs_names_list.size());
+            System.out.println("Total Allocation are:" + totalAllocationsByJobs);
+        }
         // Sort job names by OS version in descending order
         jobs_names_list.sort(Comparator.comparingInt(job -> {
             try {
@@ -124,7 +125,7 @@ public class Main {
 
                     String jobName = jobs_names_list.get(j);
 
-                    System.out.println("This is the total number of jobNameListCountMap: " + jobNameListCountMap);
+                    if (SystemUtils.IS_OS_MAC)  System.out.println("This is the total number of jobNameListCountMap: " + jobNameListCountMap);
                     // Check if the job has been allocated less than 2 times and is not already allocated to this venture
                     if (jobNameListCountMap.getOrDefault(jobName, 0) < 2 &&
                             !allocatedJobs.getOrDefault(venture, Collections.emptySet()).contains(jobName)) {
@@ -165,10 +166,11 @@ public class Main {
 
         // Get the job OS version
         int jobOSVersion = Integer.parseInt(base.getJobOSVersion_DB(jobName));
-
-        System.out.println("This is what i want to insert in the database, job name: " + jobName + " venture name: "
-                + ventureName.getName() + " buyer email: " + buyerEmailString + " execution start date: "
-                + executionStartDate + " job OS version: " + jobOSVersion);
+        if (SystemUtils.IS_OS_MAC) {
+            System.out.println("This is what i want to insert in the database, job name: " + jobName + " venture name: "
+                    + ventureName.getName() + " buyer email: " + buyerEmailString + " execution start date: "
+                    + executionStartDate + " job OS version: " + jobOSVersion);
+        }
         try {
             // Insert an execution record for the job and venture
             base.insertExecutionRecord_DB(ventureName, jobName, jobOSVersion, buyerEmailString, executionStartDate);
@@ -180,7 +182,7 @@ public class Main {
 //         Create a CurlRequest object to send a request to the device
 
         // Print a message indicating the curl request being sent
-        System.out.println("Sending curl request to the device: " + jobName + " <::> " + jobOSVersion + " <::> " + buyerEmailString + " <::> " + ventureNameString+"\n\n\n");
+        if (SystemUtils.IS_OS_MAC) System.out.println("Sending curl request to the device: " + jobName + " <::> " + jobOSVersion + " <::> " + buyerEmailString + " <::> " + ventureNameString+"\n\n\n");
 
         // Send a curl post request with device UDID, buyer email, buyer password, and venture name
         //if Mac then do not execute the curl request and if ubuntu then execute the curl request.

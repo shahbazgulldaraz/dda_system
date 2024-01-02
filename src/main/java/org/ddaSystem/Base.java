@@ -409,7 +409,7 @@ public class Base {
         String osVersion;
         String deviceUdid;
 
-        System.out.println("I am here in storeJobDetailsIn_DB : >"+jobName+" "+inProgress+" "+job_in_queue);
+        if (SystemUtils.IS_OS_MAC) System.out.println("I am here in storeJobDetailsIn_DB : >"+jobName+" "+inProgress+" "+job_in_queue);
             // Use a more robust regular expression to match the jobName pattern
             if (jobName.matches("^(\\w+)_os_(\\d+)_udid_(\\w+)$")) {
                 Matcher matcher = Pattern.compile("^(\\w+)_os_(\\d+)_udid_(\\w+)$").matcher(jobName);
@@ -420,7 +420,7 @@ public class Base {
                     osVersion = matcher.group(2);
                     deviceUdid = matcher.group(3);
                     if(devices.contains(deviceUdid)) {
-                        System.out.println("\n\n\nThis Is the Data to insert " + jobName + " " + deviceName + " " + osVersion + " " + deviceUdid + " " + inProgress + " " + job_in_queue);
+                        if (SystemUtils.IS_OS_MAC)   System.out.println("\n\n\nThis Is the Data to insert " + jobName + " " + deviceName + " " + osVersion + " " + deviceUdid + " " + inProgress + " " + job_in_queue);
                         insertJobNameAndOSIn_DB(jobName, deviceName,osVersion, deviceUdid, inProgress, job_in_queue);
                     }
                 } else {
