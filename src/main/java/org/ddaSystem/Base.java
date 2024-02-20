@@ -293,7 +293,7 @@ public class Base {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains("linux")|| osName.contains("Ubuntu")) {
             // If the operating system is Linux
-            return "jdbc:sqlite:/mnt/storage1/configs/DDASystem.db";
+            return "jdbc:sqlite:/mydrive/configs/DDASystem.db";
         } else {
             // If the operating system is macOS
             return "jdbc:sqlite:DDASystem.db";
