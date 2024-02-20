@@ -34,7 +34,7 @@ public class Base {
             if (SystemUtils.IS_OS_MAC) {
                 System.out.println("\n\n\nGetting connected devices via SSH...\n\n\n");
                 // SSH into the Ubuntu machine and run adb devices
-                command = "ssh qaautomation@30.216.6.58 adb devices";
+                command = "ssh automations@30.216.6.58 adb devices";
             } else {
                 // Run ADB command directly on Mac
                 System.out.println("\n\n\nGetting connected devices...\n\n\n");

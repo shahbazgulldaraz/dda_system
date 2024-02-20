@@ -25,14 +25,14 @@ public class CurlRequest {
     public List<String> jobStatus = new ArrayList<>();
 
     // Set Jenkins credentials
-    String base_url = base.constructJenkinsURL("/job/daraz-android-jenkins/api/json");
+    String base_url = base.constructJenkinsURL("/job/darazAndroidAutomation/api/json");
 
-    String job_url =base.constructJenkinsURL("/job/daraz-android-jenkins/job/");
+    String job_url =base.constructJenkinsURL("/job/darazAndroidAutomation/job/");
     String jenkins_queue_url = base.constructJenkinsURL("/queue/api/json");
 
     String jSon_path = "/api/json";
-    String username ="shahbaz";
-    String password = "11edaefcb2147f807810ea2217b1b231b1";
+    String username ="shahbazgull";
+    String password = "113d17a065abffd666abf0ae3137eefb48";
 
 
     // Main method for making CURL request and processing response
@@ -94,7 +94,7 @@ public class CurlRequest {
                 "&REGRESSION_TYPE=Full" +
                 "&RERUN_FAILED_ONLY=NO" +
                 "&ENV="+env +
-                "&RERUN_FILE_PATH=/mnt/storage1/rerunfiles/daraz-android-jenkins/REPLACEME" +
+                "&RERUN_FILE_PATH=/mydrive/rerunfiles/darazAndroidAutomation/REPLACEME" +
                 "&APP_ENVIRONMENT=Live" +
                 "&BUILD_TYPE=prod" +
                 "&FILE_TITLE=PkBuyerOne.yml";
