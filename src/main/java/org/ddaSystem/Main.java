@@ -113,6 +113,7 @@ public class Main {
             // Shuffle the job names list before entering the outer loop
             Collections.shuffle(jobs_names_list);
 
+
             for (; jobNameListCountMap.values().stream().mapToInt(Integer::intValue).sum() < totalAllocationsByJobs; Collections.shuffle(jobs_names_list)) {
                 // Iterate through the list of ventures
                 for (int j = 0; j < ventureList.size(); j++) {
