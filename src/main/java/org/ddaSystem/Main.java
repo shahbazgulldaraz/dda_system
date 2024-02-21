@@ -146,7 +146,7 @@ public class Main {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Exception occurred while allocating jobs to ventures.");
+            System.out.println("Exception occurred while allocating jobs to ventures."+e);
         }
 
     }
