@@ -83,27 +83,28 @@ public class CurlRequest {
     }
 
 
-    public void sendCurlPostRequest(String Job_name, String buyer_username, String buyer_password, String env) throws IOException {
+    public void sendCurlPostRequest(String jobName, String buyerUsername, String buyerPassword, String env) throws IOException {
         // Encode the email address
-        String encodedEmail = URLEncoder.encode(buyer_username, StandardCharsets.UTF_8.toString());
+        String encodedEmail = URLEncoder.encode(buyerUsername, StandardCharsets.UTF_8.toString());
 
-//         Define your data parameters to be sent to the API
+        // Define your data parameters to be sent to the API
         String data = "TAG_NAME=" +
-                "&EMAIL="+encodedEmail +
+                "&EMAIL=" + encodedEmail +
                 "&BRANCH=master" +
                 "&REGRESSION_TYPE=Full" +
                 "&RERUN_FAILED_ONLY=NO" +
-                "&ENV="+env +
+                "&ENV=" + env +
                 "&RERUN_FILE_PATH=/mydrive/rerunfiles/darazAndroidAutomation/REPLACEME" +
                 "&APP_ENVIRONMENT=Live" +
                 "&BUILD_TYPE=prod" +
                 "&FILE_TITLE=PkBuyerOne.yml";
 
         // Set up the connection and set request headers
-        URL apiUrl = new URL(job_url+Job_name+"/buildWithParameters");
+        URL apiUrl = new URL(job_url + jobName + "/buildWithParameters");
         HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Authorization", "Basic " + base.getEncodedCredentials(username, password));
+        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
         connection.setDoOutput(true);
 
         // Write the data parameters to the request body
@@ -113,20 +114,21 @@ public class CurlRequest {
         }
 
         // Read the response
-        InputStream inputStream = connection.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder response = new StringBuilder();
-        String line;
+        try (InputStream inputStream = connection.getInputStream()) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder response = new StringBuilder();
+            String line;
 
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            reader.close();
+            System.out.println("Response: " + response.toString());
         }
 
-        reader.close();
         connection.disconnect();
-
     }
-
     public void getJobInfo(List<String> jobNames) throws IOException, InterruptedException {
         List<String> devices = base.getConnectedDevices();
         for (String jobName : jobNames) {
@@ -210,7 +212,7 @@ public class CurlRequest {
             JSONObject item = items.getJSONObject(i);
             JSONObject task = item.getJSONObject("task");
 
-            if (task.getString("name").equals(jobName)) {
+            if (task.has("name") && task.getString("name").equals(jobName)) {
                 return true;
             }
         }
